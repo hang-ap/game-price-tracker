@@ -82,7 +82,7 @@
             justify-content: center;
             flex-shrink: 0;
             box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
-            margin-right: 16px; /* 與右邊資訊留空 */
+            margin-right: 16px; 
         }
 
         .game-cover-img {
@@ -114,7 +114,7 @@
         /* 加大後的價格欄位 Column */
         .game-row-prices {
             display: grid;
-            grid-template-columns: 1fr 1fr; /* 兩列均分，空間更寬 */
+            grid-template-columns: 1fr 1fr; 
             gap: 8px;
         }
 
@@ -143,7 +143,7 @@
             height: 100%;
             background: rgba(0,0,0,0.85);
             justify-content: center;
-            align-items: flex-end; /* 從底部彈出 */
+            align-items: flex-end; 
             z-index: 1000;
         }
 
@@ -182,7 +182,6 @@
             margin-bottom: 4px;
         }
 
-        /* 自訂輸入框樣式，readonly 防止 iOS 彈出原生鍵盤 */
         .form-group input {
             width: 100%;
             padding: 12px;
@@ -194,16 +193,15 @@
             outline: none;
         }
 
-        /* 當前選中的輸入框高亮 */
         .form-group input.active-input {
             border-color: var(--accent-color);
             background: #222e3c;
         }
 
-        /* 內置虛擬數字鍵盤 (Built-in Keyboard) */
+        /* 內置虛擬數字鍵盤 */
         .custom-keyboard {
             background: #2c2c2e;
-            margin: 10px -20px -20px -20px; /* 貼緊底部 */
+            margin: 10px -20px -20px -20px; 
             padding: 15px;
             padding-bottom: calc(15px + env(safe-area-inset-bottom));
             display: grid;
@@ -342,10 +340,30 @@
     </div>
 
     <script>
-        let games = JSON.parse(localStorage.getItem('hk_game_prices_v3')) || [];
+        // 10 款熱門大作的預設 Test Template
+        const testTemplate = [
+            { name: "Monster Hunter Wilds (魔物獵人 荒野)", cover: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=150", official: "568", digital: "568", gold: "418", second: "320" },
+            { name: "GTA 6 (Grand Theft Auto VI)", cover: "", official: "628", digital: "628", gold: "520", second: "450" },
+            { name: "Elden Ring (艾爾登法環)", cover: "", official: "479", digital: "316", gold: "298", second: "210" },
+            { name: "薩爾達傳說 曠野之息", cover: "", official: "499", digital: "350", gold: "360", second: "240" },
+            { name: "薩爾達傳說 王國之淚", cover: "", official: "499", digital: "410", gold: "385", second: "260" },
+            { name: "Super Mario Bros. Wonder", cover: "", official: "429", digital: "320", gold: "310", second: "220" },
+            { name: "EA Sports FC 26", cover: "", official: "549", digital: "275", gold: "340", second: "180" },
+            { name: "黑神話：悟空 (Black Myth: Wukong)", cover: "", official: "298", digital: "298", gold: "280", second: "190" },
+            { name: "Final Fantasy VII Rebirth", cover: "", official: "568", digital: "398", gold: "350", second: "250" },
+            { name: "索尼克×夏特 世代重啟", cover: "", official: "338", digital: "236", gold: "260", second: "170" }
+        ];
+
+        // 初始化：如果 LocalStorage 冇資料，就自動塞入呢 10 隻測試 Game
+        let games = JSON.parse(localStorage.getItem('hk_game_prices_v3'));
+        if (!games || games.length === 0) {
+            games = testTemplate;
+            localStorage.setItem('hk_game_prices_v3', JSON.stringify(games));
+        }
+
         let currentActiveInput = null;
 
-        // 渲染列表：封面置左，Column 加大
+        // 渲染列表
         function renderGames() {
             const listEl = document.getElementById('gameList');
             const tipsEl = document.getElementById('emptyTips');
@@ -386,15 +404,13 @@
             });
         }
 
-        // 控制邊個輸入框正在被操作
+        // 控制輸入框焦點
         function setCurrentInput(inputEl, isNative) {
-            // 移除舊的高亮
             if(currentActiveInput) currentActiveInput.classList.remove('active-input');
             
             currentActiveInput = inputEl;
             currentActiveInput.classList.add('active-input');
 
-            // 如果點擊名字或網址，顯示原生鍵盤，隱藏自訂數字鍵盤；如果是價錢，就相反
             const kb = document.getElementById('customKeyboard');
             if(isNative) {
                 kb.style.visibility = 'hidden';
@@ -404,12 +420,11 @@
                 kb.style.visibility = 'visible';
                 kb.style.height = 'auto';
                 kb.style.padding = '15px';
-                // 關閉可能開啟的原生鍵盤
                 document.activeElement.blur();
             }
         }
 
-        // 內置鍵盤按鍵事件
+        // 虛擬鍵盤按鍵邏輯
         function pressKey(key) {
             if (!currentActiveInput || currentActiveInput.readOnly === false) return;
 
@@ -418,29 +433,29 @@
             } else if (key === 'CLEAR') {
                 currentActiveInput.value = '';
             } else {
-                // 防止開頭輸入多個 0
                 if (currentActiveInput.value === '0') currentActiveInput.value = '';
                 currentActiveInput.value += key;
             }
         }
 
+        // 開啟「新增」彈窗（已修復 Bug）
         function openAddModal() {
             document.getElementById('modalTitle').innerText = "新增遊戲價格";
             document.getElementById('editIndex').value = "";
-            document.getElementById('btnDelete').style.style.visibility = "hidden"; 
+            document.getElementById('btnDelete').style.visibility = "hidden"; // Bug 修正點：移除了多餘的 .style
             document.getElementById('gameModal').style.display = 'flex';
             
-            // 預設點選第一個價錢格激活內置鍵盤
             setTimeout(() => {
                 setCurrentInput(document.getElementById('gOfficial'), false);
             }, 50);
         }
 
+        // 開啟「修改」彈窗（已修復 Bug）
         function openEditModal(index) {
             const game = games[index];
             document.getElementById('modalTitle').innerText = "修改價格資料";
             document.getElementById('editIndex').value = index;
-            document.getElementById('btnDelete').style.style.visibility = "visible";
+            document.getElementById('btnDelete').style.visibility = "visible"; // Bug 修正點：移除了多餘的 .style
 
             document.getElementById('gName').value = game.name;
             document.getElementById('gCover').value = game.cover || '';
@@ -451,7 +466,6 @@
 
             document.getElementById('gameModal').style.display = 'flex';
             
-            // 預設點選第一個價錢格
             setTimeout(() => {
                 setCurrentInput(document.getElementById('gOfficial'), false);
             }, 50);
@@ -464,7 +478,6 @@
             currentActiveInput = null;
         }
 
-        // 儲存或更新
         function handleFormSubmit() {
             const name = document.getElementById('gName').value.trim();
             if (!name) {
