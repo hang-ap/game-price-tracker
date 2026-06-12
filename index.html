@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>香港 Game 價紀錄器</title>
     
-    <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -47,22 +46,21 @@
             font-weight: 600;
         }
 
-        /* 遊戲列表容器（可向下無限捲動） */
+        /* 遊戲列表容器 */
         #gameList {
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
         }
 
-        /* 橫向遊戲列表卡片 */
+        /* 橫向遊戲列表卡片（封面在左，右邊欄位加大） */
         .game-row {
             background-color: var(--card-bg);
-            border-radius: 14px;
-            padding: 12px;
+            border-radius: 16px;
+            padding: 14px;
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
             cursor: pointer;
             transition: transform 0.1s;
         }
@@ -72,52 +70,19 @@
             background-color: #262626;
         }
 
-        /* 左邊價格與標題區 */
-        .game-left-info {
-            flex: 1;
-            padding-right: 15px;
-        }
-
-        .game-row-title {
-            font-size: 1.1rem;
-            font-weight: bold;
-            margin-bottom: 6px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            display: -webkit-box;
-            -webkit-line-clamp: 1;
-            -webkit-box-orient: vertical;
-        }
-
-        .game-row-prices {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 4px;
-            font-size: 0.8rem;
-        }
-
-        .price-tag {
-            color: var(--text-muted);
-        }
-
-        .price-tag span {
-            color: #ffcc00;
-            font-weight: 600;
-            margin-left: 3px;
-        }
-
-        /* 右邊遊戲封面區 */
+        /* 左邊遊戲封面區（固定尺寸） */
         .game-cover-wrapper {
-            width: 70px;
-            height: 90px;
-            border-radius: 8px;
+            width: 75px;
+            height: 95px;
+            border-radius: 10px;
             overflow: hidden;
             background: #2c2c2e;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.5);
+            margin-right: 16px; /* 與右邊資訊留空 */
         }
 
         .game-cover-img {
@@ -127,7 +92,45 @@
         }
 
         .game-cover-placeholder {
-            font-size: 1.5rem;
+            font-size: 1.8rem;
+        }
+
+        /* 右邊寬敞的資訊與價格欄位 */
+        .game-right-info {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .game-row-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #ffffff;
+            word-break: break-word;
+        }
+
+        /* 加大後的價格欄位 Column */
+        .game-row-prices {
+            display: grid;
+            grid-template-columns: 1fr 1fr; /* 兩列均分，空間更寬 */
+            gap: 8px;
+        }
+
+        .price-tag {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.04);
+            padding: 6px 10px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .price-tag span {
+            color: #ffcc00;
+            font-weight: bold;
         }
 
         /* 彈出式表單 (Modal) */
@@ -138,9 +141,9 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0,0,0,0.8);
+            background: rgba(0,0,0,0.85);
             justify-content: center;
-            align-items: flex-end; /* 從手機底部彈出，方便單手操作 */
+            align-items: flex-end; /* 從底部彈出 */
             z-index: 1000;
         }
 
@@ -148,12 +151,13 @@
             background-color: var(--card-bg);
             width: 100%;
             max-width: 500px;
-            border-radius: 20px 20px 0 0;
+            border-radius: 24px 24px 0 0;
             padding: 20px;
-            padding-bottom: calc(20px + env(safe-area-inset-bottom)); /* 支援 iPhone 底部安全區 */
+            padding-bottom: calc(20px + env(safe-area-inset-bottom));
             animation: slideUp 0.25s ease-out;
-            max-height: 85vh;
-            overflow-y: auto;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
         }
 
         @keyframes slideUp {
@@ -161,79 +165,100 @@
             to { transform: translateY(0); }
         }
 
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-title {
-            font-size: 1.3rem;
-            font-weight: bold;
+        .modal-body {
+            overflow-y: auto;
+            flex: 1;
+            padding-bottom: 10px;
         }
 
         .form-group {
-            margin-bottom: 14px;
+            margin-bottom: 12px;
         }
 
         .form-group label {
             display: block;
             font-size: 0.85rem;
             color: var(--text-muted);
-            margin-bottom: 5px;
+            margin-bottom: 4px;
         }
 
+        /* 自訂輸入框樣式，readonly 防止 iOS 彈出原生鍵盤 */
         .form-group input {
             width: 100%;
             padding: 12px;
             background: #2c2c2e;
-            border: 1px solid #3a3a3c;
+            border: 2px solid #3a3a3c;
             border-radius: 10px;
             color: white;
-            font-size: 1rem;
+            font-size: 1.1rem;
             outline: none;
         }
 
-        .form-group input:focus {
+        /* 當前選中的輸入框高亮 */
+        .form-group input.active-input {
             border-color: var(--accent-color);
+            background: #222e3c;
         }
 
-        .form-btns {
-            display: flex;
+        /* 內置虛擬數字鍵盤 (Built-in Keyboard) */
+        .custom-keyboard {
+            background: #2c2c2e;
+            margin: 10px -20px -20px -20px; /* 貼緊底部 */
+            padding: 15px;
+            padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            display: grid;
+            grid-template-columns: repeat(3, 1fr) 1.2fr;
             gap: 10px;
-            margin-top: 25px;
+            border-top: 1px solid #3a3a3c;
         }
 
-        .btn {
-            flex: 1;
-            padding: 14px;
+        .key {
+            background: #3a3a3c;
+            color: white;
             border: none;
             border-radius: 10px;
+            padding: 15px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .key:active {
+            background: #555557;
+        }
+
+        .key.action-key {
+            background: #48484a;
+            font-size: 1rem;
+        }
+
+        .key.delete-key {
+            background: var(--danger-color);
+        }
+
+        .key.done-key {
+            background: var(--success-color);
+            grid-row: span 2;
+            height: 100%;
+        }
+
+        .form-btns-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .btn-text {
+            background: none;
+            border: none;
             font-size: 1rem;
             font-weight: bold;
             cursor: pointer;
-        }
-
-        .btn-primary { background-color: var(--accent-color); color: white; }
-        .btn-secondary { background-color: #3a3a3c; color: white; }
-        .btn-danger { background-color: var(--danger-color); color: white; flex: 0.4; }
-
-        /* 底部固定的新增按鈕 */
-        .fab {
-            position: fixed;
-            bottom: 30px;
-            left: 50%;
-            transform: translateX(-50%);
-            background-color: var(--success-color);
-            color: white;
-            padding: 14px 28px;
-            border-radius: 30px;
-            font-weight: bold;
-            box-shadow: 0 4px 12px rgba(52,199,89,0.4);
-            border: none;
-            font-size: 1rem;
-            z-index: 999;
         }
         
         .empty-tips {
@@ -250,63 +275,77 @@
         <h1>🎮 香港 Game 價紀錄</h1>
     </header>
 
-    <!-- 遊戲列表（主畫面，可向下碌） -->
     <div id="gameList"></div>
     <div id="emptyTips" class="empty-tips">未有紀錄，撳下面加第一隻 Game 啦！</div>
 
-    <!-- 底部固定新增按鈕 -->
-    <button class="fab" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
+    <button style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: var(--accent-color); color: white; padding: 14px 28px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,122,255,0.4); border: none; font-size: 1rem; z-index: 999;" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
 
-    <!-- 詳情 / 修改 / 新增 共用彈窗 -->
     <div id="gameModal" class="modal">
         <div class="modal-content">
-            <div class="modal-header">
-                <div id="modalTitle" class="modal-title">遊戲價格詳情</div>
+            
+            <div class="form-btns-top">
+                <button type="button" class="btn-text" style="color:var(--danger-color);" id="btnDelete" onclick="deleteGame()">刪除</button>
+                <h3 id="modalTitle" style="font-size:1.2rem;">遊戲價格詳情</h3>
+                <button type="button" class="btn-text" style="color:var(--accent-color);" onclick="closeModal()">取消</button>
             </div>
-            <form id="gameForm" onsubmit="handleFormSubmit(event)">
-                <!-- 隱藏格，用來記錄依家改緊邊一隻 Game 的 Index -->
+
+            <div class="modal-body">
                 <input type="hidden" id="editIndex" value="">
 
                 <div class="form-group">
                     <label>遊戲名稱</label>
-                    <input type="text" id="gName" required placeholder="例如：Monster Hunter Wilds">
+                    <input type="text" id="gName" required placeholder="例如：Monster Hunter Wilds" onfocus="setCurrentInput(this, true)">
                 </div>
                 <div class="form-group">
-                    <label>封面圖片網址 (可不填)</label>
-                    <input type="url" id="gCover" placeholder="可貼上 Google 圖片網址">
+                    <label>封面圖片網址</label>
+                    <input type="url" id="gCover" placeholder="可貼上網上圖片網址" onfocus="setCurrentInput(this, true)">
                 </div>
+                
                 <div class="form-group">
                     <label>官方原價 (HKD)</label>
-                    <input type="number" id="gOfficial" placeholder="e.g. 568">
+                    <input type="text" id="gOfficial" placeholder="點擊此處使用下方鍵盤" readonly onclick="setCurrentInput(this, false)">
                 </div>
                 <div class="form-group">
                     <label>eShop / 數碼價 (HKD)</label>
-                    <input type="number" id="gDigital" placeholder="e.g. 450">
+                    <input type="text" id="gDigital" placeholder="點擊此處使用下方鍵盤" readonly onclick="setCurrentInput(this, false)">
                 </div>
                 <div class="form-group">
                     <label>黃金一手實體價 (HKD)</label>
-                    <input type="number" id="gGold" placeholder="e.g. 420">
+                    <input type="text" id="gGold" placeholder="點擊此處使用下方鍵盤" readonly onclick="setCurrentInput(this, false)">
                 </div>
                 <div class="form-group">
                     <label>二手市價 (HKD)</label>
-                    <input type="number" id="gSecond" placeholder="e.g. 300">
+                    <input type="text" id="gSecond" placeholder="點擊此處使用下方鍵盤" readonly onclick="setCurrentInput(this, false)">
                 </div>
+            </div>
+
+            <div class="custom-keyboard" id="customKeyboard">
+                <button type="button" class="key" onclick="pressKey('1')">1</button>
+                <button type="button" class="key" onclick="pressKey('2')">2</button>
+                <button type="button" class="key" onclick="pressKey('3')">3</button>
+                <button type="button" class="key action-key delete-key" onclick="pressKey('BACK')">⌫</button>
                 
-                <div class="form-btns">
-                    <!-- 只有修改舊 Game 時才會顯示刪除鈕，由 JS 控制 -->
-                    <button type="button" id="btnDelete" class="btn btn-danger" onclick="deleteGame()">刪除</button>
-                    <button type="button" class="btn btn-secondary" onclick="closeModal()">取消</button>
-                    <button type="submit" id="btnSubmit" class="btn btn-primary">儲存</button>
-                </div>
-            </form>
+                <button type="button" class="key" onclick="pressKey('4')">4</button>
+                <button type="button" class="key" onclick="pressKey('5')">5</button>
+                <button type="button" class="key" onclick="pressKey('6')">6</button>
+                <button type="button" class="key action-key done-key" onclick="handleFormSubmit()">儲存<br>Update</button>
+                
+                <button type="button" class="key" onclick="pressKey('7')">7</button>
+                <button type="button" class="key" onclick="pressKey('8')">8</button>
+                <button type="button" class="key" onclick="pressKey('9')">9</button>
+                
+                <button type="button" class="key action-key" onclick="pressKey('CLEAR')">Clear</button>
+                <button type="button" class="key" style="grid-column: span 2;" onclick="pressKey('0')">0</button>
+            </div>
+
         </div>
     </div>
 
     <script>
-        // 初始化：由 LocalStorage 讀取數據
-        let games = JSON.parse(localStorage.getItem('hk_game_prices_v2')) || [];
+        let games = JSON.parse(localStorage.getItem('hk_game_prices_v3')) || [];
+        let currentActiveInput = null;
 
-        // 渲染主畫面列表（左邊價錢，右邊封面）
+        // 渲染列表：封面置左，Column 加大
         function renderGames() {
             const listEl = document.getElementById('gameList');
             const tipsEl = document.getElementById('emptyTips');
@@ -322,51 +361,87 @@
             games.forEach((game, index) => {
                 const row = document.createElement('div');
                 row.className = 'game-row';
-                // 點擊成行任何地方，直接彈出 Info 修改畫面
                 row.setAttribute('onclick', `openEditModal(${index})`);
 
-                // 封面處理：有填網址就用網址，冇填就用🎮 Emoji 替代
                 const coverHtml = game.cover 
                     ? `<img src="${game.cover}" class="game-cover-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
                        <span class="game-cover-placeholder" style="display:none;">🎮</span>`
                     : `<span class="game-cover-placeholder">🎮</span>`;
 
                 row.innerHTML = `
-                    <div class="game-left-info">
-                        <div class="game-row-title">${game.name}</div>
-                        <div class="game-row-prices">
-                            <div class="price-tag">原價:<span>$${game.official || '-'}</span></div>
-                            <div class="price-tag">數碼:<span>$${game.digital || '-'}</span></div>
-                            <div class="price-tag">黃金:<span>$${game.gold || '-'}</span></div>
-                            <div class="price-tag">二手:<span>$${game.second || '-'}</span></div>
-                        </div>
-                    </div>
                     <div class="game-cover-wrapper">
                         ${coverHtml}
+                    </div>
+                    <div class="game-right-info">
+                        <div class="game-row-title">${game.name}</div>
+                        <div class="game-row-prices">
+                            <div class="price-tag">原價 <span>$${game.official || '-'}</span></div>
+                            <div class="price-tag">數碼 <span>$${game.digital || '-'}</span></div>
+                            <div class="price-tag">黃金 <span>$${game.gold || '-'}</span></div>
+                            <div class="price-tag">二手 <span>$${game.second || '-'}</span></div>
+                        </div>
                     </div>
                 `;
                 listEl.appendChild(row);
             });
         }
 
-        // 開啟「新增」模式 Pop-up
-        function openAddModal() {
-            document.getElementById('modalTitle').innerText = "新增遊戲價格";
-            document.getElementById('editIndex').value = ""; // 清空 Index 代表是新加
-            document.getElementById('btnDelete').style.display = "none"; // 新增時不需要刪除鈕
-            document.getElementById('btnSubmit').innerText = "新增儲存";
-            document.getElementById('gameModal').style.display = 'flex';
+        // 控制邊個輸入框正在被操作
+        function setCurrentInput(inputEl, isNative) {
+            // 移除舊的高亮
+            if(currentActiveInput) currentActiveInput.classList.remove('active-input');
+            
+            currentActiveInput = inputEl;
+            currentActiveInput.classList.add('active-input');
+
+            // 如果點擊名字或網址，顯示原生鍵盤，隱藏自訂數字鍵盤；如果是價錢，就相反
+            const kb = document.getElementById('customKeyboard');
+            if(isNative) {
+                kb.style.visibility = 'hidden';
+                kb.style.height = '0px';
+                kb.style.padding = '0px';
+            } else {
+                kb.style.visibility = 'visible';
+                kb.style.height = 'auto';
+                kb.style.padding = '15px';
+                // 關閉可能開啟的原生鍵盤
+                document.activeElement.blur();
+            }
         }
 
-        // 開啟「詳情/修改」模式 Pop-up（點擊某隻 Game 時觸發）
+        // 內置鍵盤按鍵事件
+        function pressKey(key) {
+            if (!currentActiveInput || currentActiveInput.readOnly === false) return;
+
+            if (key === 'BACK') {
+                currentActiveInput.value = currentActiveInput.value.slice(0, -1);
+            } else if (key === 'CLEAR') {
+                currentActiveInput.value = '';
+            } else {
+                // 防止開頭輸入多個 0
+                if (currentActiveInput.value === '0') currentActiveInput.value = '';
+                currentActiveInput.value += key;
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = "新增遊戲價格";
+            document.getElementById('editIndex').value = "";
+            document.getElementById('btnDelete').style.style.visibility = "hidden"; 
+            document.getElementById('gameModal').style.display = 'flex';
+            
+            // 預設點選第一個價錢格激活內置鍵盤
+            setTimeout(() => {
+                setCurrentInput(document.getElementById('gOfficial'), false);
+            }, 50);
+        }
+
         function openEditModal(index) {
             const game = games[index];
             document.getElementById('modalTitle').innerText = "修改價格資料";
-            document.getElementById('editIndex').value = index; // 記住依家改緊邊一隻
-            document.getElementById('btnDelete').style.display = "block"; // 顯示刪除按鈕
-            document.getElementById('btnSubmit').innerText = "直接更新";
+            document.getElementById('editIndex').value = index;
+            document.getElementById('btnDelete').style.style.visibility = "visible";
 
-            // 填入原本的資料
             document.getElementById('gName').value = game.name;
             document.getElementById('gCover').value = game.cover || '';
             document.getElementById('gOfficial').value = game.official || '';
@@ -375,21 +450,33 @@
             document.getElementById('gSecond').value = game.second || '';
 
             document.getElementById('gameModal').style.display = 'flex';
+            
+            // 預設點選第一個價錢格
+            setTimeout(() => {
+                setCurrentInput(document.getElementById('gOfficial'), false);
+            }, 50);
         }
 
-        // 關閉 Pop-up 並清空
         function closeModal() {
             document.getElementById('gameModal').style.display = 'none';
             document.getElementById('gameForm').reset();
+            if(currentActiveInput) currentActiveInput.classList.remove('active-input');
+            currentActiveInput = null;
         }
 
-        // 處理表單提交（不論是新增還是更新）
-        function handleFormSubmit(e) {
-            e.preventDefault();
+        // 儲存或更新
+        function handleFormSubmit() {
+            const name = document.getElementById('gName').value.trim();
+            if (!name) {
+                alert('請先輸入遊戲名稱！');
+                setCurrentInput(document.getElementById('gName'), true);
+                document.getElementById('gName').focus();
+                return;
+            }
             
             const index = document.getElementById('editIndex').value;
             const gameData = {
-                name: document.getElementById('gName').value,
+                name: name,
                 cover: document.getElementById('gCover').value,
                 official: document.getElementById('gOfficial').value,
                 digital: document.getElementById('gDigital').value,
@@ -398,40 +485,30 @@
             };
 
             if (index === "") {
-                // 新增
                 games.push(gameData);
             } else {
-                // 直接修改/更新
                 games[index] = gameData;
             }
 
-            saveToLocalStorage();
+            localStorage.setItem('hk_game_prices_v3', JSON.stringify(games));
             renderGames();
             closeModal();
         }
 
-        // 刪除遊戲功能
         function deleteGame() {
             const index = document.getElementById('editIndex').value;
-            if (index !== "s" && confirm(`確定要刪除 "${games[index].name}" 嗎？`)) {
+            if (index !== "" && confirm(`確定要刪除 "${games[index].name}" 嗎？`)) {
                 games.splice(index, 1);
-                saveToLocalStorage();
+                localStorage.setItem('hk_game_prices_v3', JSON.stringify(games));
                 renderGames();
                 closeModal();
             }
         }
 
-        // 儲存到手機 LocalStorage
-        function saveToLocalStorage() {
-            localStorage.setItem('hk_game_prices_v2', JSON.stringify(games));
-        }
-
-        // 簡單 PWA 離線支援
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js').catch(() => {});
         }
 
-        // 網頁開檔即載入
         renderGames();
     </script>
 </body>
