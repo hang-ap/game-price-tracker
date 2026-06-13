@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>香港 Game 價紀錄器 (終極流暢版)</title>
+    <title>香港 Game 價紀錄器 (現場格價特化版)</title>
     
+    <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -29,8 +30,7 @@
         }
 
         * {
-            box-sizing: border-box;
-            margin: 0; padding: 0;
+            box-sizing: border-box; margin: 0; padding: 0;
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             -webkit-tap-highlight-color: transparent;
         }
@@ -87,7 +87,6 @@
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        /* 確保內容區可以捲動，並為底部內置鍵盤留出空間 */
         .modal-body { overflow-y: auto; flex: 1; padding-bottom: 30px; scroll-behavior: smooth; }
 
         .form-group { margin-bottom: 12px; }
@@ -109,7 +108,7 @@
         
         .edit-price-row select { width: 85px; padding: 6px; font-size: 0.8rem; border-radius: 6px; }
         .edit-price-row .input-note { flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 6px; min-width: 0; }
-        .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 0.8rem; border-radius: 6px; }
+        .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 0.8rem; border-radius: 6px; background: #1c1c1e; }
         
         .btn-toggle-condition {
             padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: bold; color: white; cursor: pointer; min-width: 45px;
@@ -118,12 +117,18 @@
         .toggle-used { background-color: var(--warning-color); }
 
         .btn-remove-price { background: none; border: none; color: var(--danger-color); font-size: 1.1rem; cursor: pointer; padding: 0 2px; }
-        .btn-add-price-row { background: #2c2c2e; color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        .btn-add-price-row { background: #2c2c2e; color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; margin-bottom: 15px; }
 
-        /* 內置鍵盤 */
+        /* 外置的大型儲存按鈕 */
+        .btn-main-submit {
+            background-color: var(--success-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(52,199,89,0.3); margin-top: 10px;
+        }
+
+        /* 內置鍵盤（高度微調） */
         .custom-keyboard {
             background: #2c2c2e; margin: 10px -20px -20px -20px; padding: 15px; padding-bottom: calc(15px + env(safe-area-inset-bottom));
             display: grid; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 10px; border-top: 1px solid #3a3a3c;
+            display: none; /* 預設先隱藏，點價錢格才彈出 */
         }
         .key {
             background: #3a3a3c; color: white; border: none; border-radius: 10px; padding: 12px 0; font-size: 1.3rem; font-weight: 600; cursor: pointer;
@@ -132,7 +137,9 @@
         .key:active { background: #555557; }
         .key.action-key { background: #48484a; font-size: 1rem; }
         .key.delete-key { background: var(--danger-color); }
-        .key.done-key { background: var(--success-color); grid-row: span 2; height: 100%; }
+        
+        /* 鍵盤完成收起掣 */
+        .key.done-key { background: var(--accent-color); grid-row: span 2; height: 100%; font-size: 1.1rem; }
 
         .form-btns-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-text { background: none; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
@@ -142,7 +149,7 @@
 <body>
 
     <header>
-        <h1>🎮 香港 Game 價紀錄 (極速對比版)</h1>
+        <h1>🎮 香港 Game 價紀錄 (極速版)</h1>
     </header>
 
     <div id="gameList"></div>
@@ -150,6 +157,7 @@
 
     <button style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: var(--accent-color); color: white; padding: 14px 28px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,122,255,0.4); border: none; font-size: 1rem; z-index: 999;" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
 
+    <!-- 編輯視窗 -->
     <div id="gameModal" class="modal">
         <div class="modal-content">
             
@@ -163,54 +171,61 @@
                 <div class="modal-body" id="modalBody">
                     <input type="hidden" id="editIndex" value="">
 
+                    <!-- 遊戲基本資料 -->
                     <div class="form-group">
                         <label>遊戲名稱</label>
                         <input type="text" id="gName" required placeholder="例如：Monster Hunter Wilds" onfocus="hideCustomKeyboard()" oninput="updateScraperLinks()">
                         
+                        <!-- 修正後的 Nintendo eShop / PS Store 格價傳送門 -->
                         <div class="scraper-shortcuts">
-                            <a id="lnkEshop" class="btn-shortcut" target="_blank" href="#">🔍 HK eShop 價</a>
-                            <a id="lnkPsn" class="btn-shortcut" target="_blank" href="#">🔍 PS Store 價</a>
+                            <a id="lnkEshop" class="btn-shortcut" target="_blank" href="#">🔍 eShop 價 (eshop-prices)</a>
+                            <a id="lnkPsn" class="btn-shortcut" target="_blank" href="#">🔍 PS Store 官網</a>
                             <a id="lnkGoogle" class="btn-shortcut" target="_blank" href="#">🔍 Google 搜尋</a>
                         </div>
                     </div>
                     
                     <div class="form-group">
-                        <label>封面圖片網址 (可貼上 Google 圖片網址)</label>
+                        <label>封面圖片網址 (可不填)</label>
                         <input type="url" id="gCover" placeholder="https://example.com/image.png" onfocus="hideCustomKeyboard()">
                     </div>
                     
+                    <!-- 動態價格區 -->
                     <div class="form-group" style="margin-top: 15px;">
-                        <label>價格紀錄（點擊價錢格使用下方鍵盤）</label>
+                        <label>價格紀錄（點擊價錢欄位入數）</label>
                         <div id="dynamicPriceArea"></div>
-                        <button type="button" class="btn-add-price-row" onclick="addPriceRowWithScroll('switch', '一手', '', '')">＋ 新增價格紀錄</button>
+                        <button type="button" class="btn-add-price-row" onclick="addPriceRowWithScroll('switch', '一手', '', '')">＋ 新增價格欄位</button>
                     </div>
+
+                    <!-- 外置獨立大儲存掣（不需要強制點完鍵盤才能儲存） -->
+                    <button type="button" class="btn-main-submit" onclick="handleFormSubmit()">💾 儲存所有修改</button>
                 </div>
             </form>
 
+            <!-- Built-in 數字鍵盤（修正：使用 ontouchstart 實時觸發，免除 300ms 延遲） -->
             <div class="custom-keyboard" id="customKeyboard">
-                <button type="button" class="key" onclick="pressKey('1')">1</button>
-                <button type="button" class="key" onclick="pressKey('2')">2</button>
-                <button type="button" class="key" onclick="pressKey('3')">3</button>
-                <button type="button" class="key action-key delete-key" onclick="pressKey('BACK')">⌫</button>
+                <button type="button" class="key" ontouchstart="pressKey('1')" mousedown="pressKey('1')">1</button>
+                <button type="button" class="key" ontouchstart="pressKey('2')" mousedown="pressKey('2')">2</button>
+                <button type="button" class="key" ontouchstart="pressKey('3')" mousedown="pressKey('3')">3</button>
+                <button type="button" class="key action-key delete-key" ontouchstart="pressKey('BACK')" mousedown="pressKey('BACK')">⌫</button>
                 
-                <button type="button" class="key" onclick="pressKey('4')">4</button>
-                <button type="button" class="key" onclick="pressKey('5')">5</button>
-                <button type="button" class="key" onclick="pressKey('6')">6</button>
-                <button type="button" class="key action-key done-key" onclick="handleFormSubmit()">儲存<br>Update</button>
+                <button type="button" class="key" ontouchstart="pressKey('4')" mousedown="pressKey('4')">4</button>
+                <button type="button" class="key" ontouchstart="pressKey('5')" mousedown="pressKey('5')">5</button>
+                <button type="button" class="key" ontouchstart="pressKey('6')" mousedown="pressKey('6')">6</button>
+                <!-- 修正：鍵盤綠色掣改為單純收起鍵盤，不強制提交 -->
+                <button type="button" class="key action-key done-key" ontouchstart="hideCustomKeyboard()" mousedown="hideCustomKeyboard()">完成<br>🔽</button>
                 
-                <button type="button" class="key" onclick="pressKey('7')">7</button>
-                <button type="button" class="key" onclick="pressKey('8')">8</button>
-                <button type="button" class="key" onclick="pressKey('9')">9</button>
+                <button type="button" class="key" ontouchstart="pressKey('7')" mousedown="pressKey('7')">7</button>
+                <button type="button" class="key" ontouchstart="pressKey('8')" mousedown="pressKey('8')">8</button>
+                <button type="button" class="key" ontouchstart="pressKey('9')" mousedown="pressKey('9')">9</button>
                 
-                <button type="button" class="key action-key" onclick="pressKey('CLEAR')">Clear</button>
-                <button type="button" class="key" style="grid-column: span 2;" onclick="pressKey('0')">0</button>
+                <button type="button" class="key action-key" ontouchstart="pressKey('CLEAR')" mousedown="pressKey('CLEAR')">Clear</button>
+                <button type="button" class="key" style="grid-column: span 2;" ontouchstart="pressKey('0')" mousedown="pressKey('0')">0</button>
             </div>
 
         </div>
     </div>
 
     <script>
-        // 內置預設測試數據
         const advancedTestTemplate = [
             { 
                 name: "魔物獵人 荒野 (Monster Hunter Wilds)", 
@@ -281,6 +296,7 @@
             });
         }
 
+        // 修正：更精準的全球/香港地區 eShop 與 PSN 價格搜尋引擎傳送門
         function updateScraperLinks() {
             const name = document.getElementById('gName').value.trim();
             const eshopLnk = document.getElementById('lnkEshop');
@@ -293,11 +309,11 @@
             }
 
             googleLnk.href = `https://www.google.com/search?q=${encodeURIComponent(name + " 香港 價錢")}`;
-            eshopLnk.href = `https://www.google.com/search?q=${encodeURIComponent(name + " site:link.nintendo.com.hk")}`;
-            psnLnk.href = `https://www.playstation.com/zh-hant-hk/search/?q=${encodeURIComponent(name)}`;
+            // 轉用全球最知名、能同時對比各國與香港 Nintendo eShop 特價的專業網址
+            eshopLnk.href = `https://eshop-prices.com/games?q=${encodeURIComponent(name)}`;
+            psnLnk.href = `https://store.playstation.com/zh-hant-hk/search/${encodeURIComponent(name)}`;
         }
 
-        // 基本新增欄位函數
         function addPriceRow(platform = 'switch', condition = '一手', note = '', price = '') {
             const area = document.getElementById('dynamicPriceArea');
             const rowId = 'p_row_' + Date.now() + Math.random().toString(36).substr(2, 5);
@@ -326,14 +342,11 @@
             return { inputPrice: rowDiv.querySelector('.input-price'), id: rowId };
         }
 
-        // 修正：新增價格時自動滾動，防止「一手/二手」按鈕擋住鍵盤
         function addPriceRowWithScroll(platform, condition, note, price) {
             const rowInfo = addPriceRow(platform, condition, note, price);
-            
-            // 延時滾動，確保 DOM 已經渲染完成
             setTimeout(() => {
                 const bodyEl = document.getElementById('modalBody');
-                bodyEl.scrollTop = bodyEl.scrollHeight; // 自動碌去最底
+                bodyEl.scrollTop = bodyEl.scrollHeight;
                 activatePriceKeyboard(rowInfo.inputPrice, rowInfo.id);
             }, 80);
         }
@@ -356,22 +369,29 @@
             document.getElementById(rowId).classList.add('active-row');
 
             const kb = document.getElementById('customKeyboard');
-            kb.style.visibility = 'visible'; kb.style.height = 'auto'; kb.style.padding = '15px';
+            kb.style.display = 'grid'; // 顯示鍵盤
             document.activeElement.blur();
         }
 
         function hideCustomKeyboard() {
             const kb = document.getElementById('customKeyboard');
-            kb.style.visibility = 'hidden'; kb.style.height = '0px'; kb.style.padding = '0px';
+            kb.style.display = 'none'; // 隱藏鍵盤
             document.querySelectorAll('.edit-price-row').forEach(el => el.classList.remove('active-row'));
             currentActivePriceInput = null;
         }
 
+        // 修正：極速零延遲鍵盤打字核心
         function pressKey(key) {
             if (!currentActivePriceInput) return;
-            if (key === 'BACK') { currentActivePriceInput.value = currentActivePriceInput.value.slice(0, -1); } 
-            else if (key === 'CLEAR') { currentActivePriceInput.value = ''; } 
-            else {
+            
+            // 阻止 iOS Haptic 或重疊點擊
+            if (event) event.preventDefault(); 
+
+            if (key === 'BACK') { 
+                currentActivePriceInput.value = currentActivePriceInput.value.slice(0, -1); 
+            } else if (key === 'CLEAR') { 
+                currentActivePriceInput.value = ''; 
+            } else {
                 if (currentActivePriceInput.value === '0') currentActivePriceInput.value = '';
                 currentActivePriceInput.value += key;
             }
@@ -386,8 +406,9 @@
             updateScraperLinks();
             document.getElementById('gameModal').style.display = 'flex';
             
-            // 預設送一條空白價格
+            // 新增時不需要一開始就彈鍵盤，保持畫面寬敞
             addPriceRow('switch', '一手', '', '');
+            hideCustomKeyboard();
         }
 
         function openEditModal(index) {
@@ -410,6 +431,7 @@
                 addPriceRow('switch', '一手', '', '');
             }
             document.getElementById('gameModal').style.display = 'flex';
+            hideCustomKeyboard(); // 修改時預設也先收起鍵盤，等點擊價錢格才彈出
         }
 
         function closeModal() {
@@ -430,9 +452,8 @@
                 const note = row.querySelector('.input-note').value.trim();
                 const price = row.querySelector('.input-price').value.trim();
                 
-                if (note || price) {
-                    pricesData.push({ platform, condition, note, price });
-                }
+                // 只要平台、一手二手有改，即使價錢沒填，一樣允許儲存
+                pricesData.push({ platform, condition, note, price });
             });
             
             const index = document.getElementById('editIndex').value;
