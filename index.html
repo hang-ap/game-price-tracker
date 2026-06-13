@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>香港 Game 價紀錄器 (極速格價版)</title>
+    <title>香港 Game 價紀錄器 (終極流暢版)</title>
     
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -52,7 +52,7 @@
         }
         .game-cover-img { width: 100%; height: 100%; object-fit: cover; }
         .game-cover-placeholder { font-size: 1.8rem; }
-        .game-right-info { flex: 1; }
+        .game-right-info { flex: 1; min-width: 0; }
         .game-row-title { font-size: 1.15rem; font-weight: bold; margin-bottom: 8px; color: #ffffff; }
 
         .game-row-prices-container { display: flex; flex-direction: column; gap: 6px; }
@@ -61,7 +61,6 @@
             background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 6px; font-size: 0.85rem;
         }
 
-        /* 狀態與平台 Tag */
         .platform-badge { font-size: 0.7rem; font-weight: bold; padding: 2px 5px; border-radius: 4px; color: white; text-transform: uppercase; }
         .badge-switch { background-color: var(--color-switch); }
         .badge-ps5 { background-color: var(--color-ps5); }
@@ -87,7 +86,9 @@
             animation: slideUp 0.25s ease-out; max-height: 92vh; display: flex; flex-direction: column;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-        .modal-body { overflow-y: auto; flex: 1; padding-bottom: 10px; }
+        
+        /* 確保內容區可以捲動，並為底部內置鍵盤留出空間 */
+        .modal-body { overflow-y: auto; flex: 1; padding-bottom: 30px; scroll-behavior: smooth; }
 
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
@@ -95,7 +96,6 @@
             width: 100%; padding: 10px; background: #2c2c2e; border: 2px solid #3a3a3c; border-radius: 8px; color: white; font-size: 1rem; outline: none;
         }
 
-        /* 傳送門快捷按鈕 */
         .scraper-shortcuts { display: flex; gap: 8px; margin-top: 5px; }
         .btn-shortcut {
             flex: 1; background: #2c2c2e; border: 1px solid #555; color: #ccc; padding: 6px; border-radius: 6px; font-size: 0.75rem; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center;
@@ -103,17 +103,16 @@
 
         /* 彈出視窗內的動態價格行 */
         .edit-price-row {
-            display: flex; gap: 4px; align-items: center; background: rgba(255,255,255,0.02); padding: 8px 4px; border-radius: 8px; margin-bottom: 8px; border: 2px solid transparent;
+            display: flex; gap: 6px; align-items: center; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 2px solid transparent;
         }
         .edit-price-row.active-row { border-color: var(--accent-color); background: #222e3c; }
         
         .edit-price-row select { width: 85px; padding: 6px; font-size: 0.8rem; border-radius: 6px; }
-        .edit-price-row .input-note { flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 6px; }
-        .edit-price-row .input-price { width: 70px; padding: 6px; font-weight: bold; text-align: right; font-size: 0.8rem; border-radius: 6px; }
+        .edit-price-row .input-note { flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 6px; min-width: 0; }
+        .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 0.8rem; border-radius: 6px; }
         
-        /* 一手二手狀態按鈕 */
         .btn-toggle-condition {
-            padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: bold; color: white; cursor: pointer; min-width: 42px;
+            padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: bold; color: white; cursor: pointer; min-width: 45px;
         }
         .toggle-new { background-color: var(--accent-color); }
         .toggle-used { background-color: var(--warning-color); }
@@ -160,31 +159,33 @@
                 <button type="button" class="btn-text" style="color:var(--accent-color);" onclick="closeModal()">取消</button>
             </div>
 
-            <div class="modal-body">
-                <input type="hidden" id="editIndex" value="">
+            <form id="gameForm" onsubmit="event.preventDefault();" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+                <div class="modal-body" id="modalBody">
+                    <input type="hidden" id="editIndex" value="">
 
-                <div class="form-group">
-                    <label>遊戲名稱</label>
-                    <input type="text" id="gName" required placeholder="例如：Monster Hunter Wilds" onfocus="hideCustomKeyboard()" oninput="updateScraperLinks()">
+                    <div class="form-group">
+                        <label>遊戲名稱</label>
+                        <input type="text" id="gName" required placeholder="例如：Monster Hunter Wilds" onfocus="hideCustomKeyboard()" oninput="updateScraperLinks()">
+                        
+                        <div class="scraper-shortcuts">
+                            <a id="lnkEshop" class="btn-shortcut" target="_blank" href="#">🔍 HK eShop 價</a>
+                            <a id="lnkPsn" class="btn-shortcut" target="_blank" href="#">🔍 PS Store 價</a>
+                            <a id="lnkGoogle" class="btn-shortcut" target="_blank" href="#">🔍 Google 搜尋</a>
+                        </div>
+                    </div>
                     
-                    <div class="scraper-shortcuts">
-                        <a id="lnkEshop" class="btn-shortcut" target="_blank" href="#">🔍 HK eShop 價</a>
-                        <a id="lnkPsn" class="btn-shortcut" target="_blank" href="#">🔍 PS Store 價</a>
-                        <a id="lnkGoogle" class="btn-shortcut" target="_blank" href="#">🔍 Google 搜尋</a>
+                    <div class="form-group">
+                        <label>封面圖片網址 (可貼上 Google 圖片網址)</label>
+                        <input type="url" id="gCover" placeholder="https://example.com/image.png" onfocus="hideCustomKeyboard()">
+                    </div>
+                    
+                    <div class="form-group" style="margin-top: 15px;">
+                        <label>價格紀錄（點擊價錢格使用下方鍵盤）</label>
+                        <div id="dynamicPriceArea"></div>
+                        <button type="button" class="btn-add-price-row" onclick="addPriceRowWithScroll('switch', '一手', '', '')">＋ 新增價格紀錄</button>
                     </div>
                 </div>
-                
-                <div class="form-group" style="display:none;">
-                    <label>封面圖片網址</label>
-                    <input type="url" id="gCover" placeholder="可不填" onfocus="hideCustomKeyboard()">
-                </div>
-                
-                <div class="form-group" style="margin-top: 15px;">
-                    <label>價格紀錄（點擊價錢欄使用下方鍵盤）</label>
-                    <div id="dynamicPriceArea"></div>
-                    <button type="button" class="btn-add-price-row" onclick="addPriceRow('switch', '一手', '', '一手')">＋ 新增價格</button>
-                </div>
-            </div>
+            </form>
 
             <div class="custom-keyboard" id="customKeyboard">
                 <button type="button" class="key" onclick="pressKey('1')">1</button>
@@ -213,7 +214,7 @@
         const advancedTestTemplate = [
             { 
                 name: "魔物獵人 荒野 (Monster Hunter Wilds)", 
-                cover: "", 
+                cover: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=150", 
                 prices: [
                     { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" },
                     { platform: "ps5", condition: "一手", note: "官方 PS Store", price: "568" }
@@ -264,8 +265,13 @@
                     pricesHtml = `<div style="color:var(--text-muted); font-size:0.8rem;">暫無價格紀錄</div>`;
                 }
 
+                const coverHtml = game.cover 
+                    ? `<img src="${game.cover}" class="game-cover-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                       <span class="game-cover-placeholder" style="display:none;">🎮</span>`
+                    : `<span class="game-cover-placeholder">🎮</span>`;
+
                 row.innerHTML = `
-                    <div class="game-cover-wrapper"><span class="game-cover-placeholder">🎮</span></div>
+                    <div class="game-cover-wrapper">${coverHtml}</div>
                     <div class="game-right-info">
                         <div class="game-row-title">${game.name}</div>
                         <div class="game-row-prices-container">${pricesHtml}</div>
@@ -275,7 +281,6 @@
             });
         }
 
-        // 動態生成一鍵「格價傳送門」網址
         function updateScraperLinks() {
             const name = document.getElementById('gName').value.trim();
             const eshopLnk = document.getElementById('lnkEshop');
@@ -287,13 +292,12 @@
                 return;
             }
 
-            // 帶入網址編碼，生成直接跳轉去格價的傳送門
             googleLnk.href = `https://www.google.com/search?q=${encodeURIComponent(name + " 香港 價錢")}`;
             eshopLnk.href = `https://www.google.com/search?q=${encodeURIComponent(name + " site:link.nintendo.com.hk")}`;
             psnLnk.href = `https://www.playstation.com/zh-hant-hk/search/?q=${encodeURIComponent(name)}`;
         }
 
-        // 動態增加格價列（內含一手/二手一鍵切換掣）
+        // 基本新增欄位函數
         function addPriceRow(platform = 'switch', condition = '一手', note = '', price = '') {
             const area = document.getElementById('dynamicPriceArea');
             const rowId = 'p_row_' + Date.now() + Math.random().toString(36).substr(2, 5);
@@ -302,7 +306,6 @@
             rowDiv.className = 'edit-price-row';
             rowDiv.id = rowId;
 
-            // 根據初始狀態決定按鈕樣式
             const btnClass = condition === '二手' ? 'toggle-used' : 'toggle-new';
 
             rowDiv.innerHTML = `
@@ -314,16 +317,27 @@
                     <option value="pc" ${platform==='pc'?'selected':''}>PC</option>
                 </select>
                 <button type="button" class="btn-toggle-condition ${btnClass}" onclick="toggleCondition(this)">${condition}</button>
-                <input type="text" class="input-note" placeholder="備註: e.g. 黃金/信和" value="${note}" onfocus="hideCustomKeyboard()">
+                <input type="text" class="input-note" placeholder="備註" value="${note}" onfocus="hideCustomKeyboard()">
                 <input type="text" class="input-price" placeholder="價錢" value="${price}" readonly onclick="activatePriceKeyboard(this, '${rowId}')">
                 <button type="button" class="btn-remove-price" onclick="document.getElementById('${rowId}').remove()">🗑️</button>
             `;
 
             area.appendChild(rowDiv);
-            activatePriceKeyboard(rowDiv.querySelector('.input-price'), rowId);
+            return { inputPrice: rowDiv.querySelector('.input-price'), id: rowId };
         }
 
-        // 一手/二手按鈕狀態切換邏輯
+        // 修正：新增價格時自動滾動，防止「一手/二手」按鈕擋住鍵盤
+        function addPriceRowWithScroll(platform, condition, note, price) {
+            const rowInfo = addPriceRow(platform, condition, note, price);
+            
+            // 延時滾動，確保 DOM 已經渲染完成
+            setTimeout(() => {
+                const bodyEl = document.getElementById('modalBody');
+                bodyEl.scrollTop = bodyEl.scrollHeight; // 自動碌去最底
+                activatePriceKeyboard(rowInfo.inputPrice, rowInfo.id);
+            }, 80);
+        }
+
         function toggleCondition(btn) {
             if (btn.innerText === '一手') {
                 btn.innerText = '二手';
@@ -364,13 +378,15 @@
         }
 
         function openAddModal() {
-            document.getElementById('modalTitle').innerText = "新增遊戲";
+            document.getElementById('modalTitle').innerText = "新增遊戲紀錄";
             document.getElementById('editIndex').value = "";
             document.getElementById('btnDelete').style.visibility = "hidden";
             document.getElementById('dynamicPriceArea').innerHTML = '';
             document.getElementById('gameForm').reset();
             updateScraperLinks();
             document.getElementById('gameModal').style.display = 'flex';
+            
+            // 預設送一條空白價格
             addPriceRow('switch', '一手', '', '');
         }
 
@@ -380,6 +396,7 @@
             document.getElementById('editIndex').value = index;
             document.getElementById('btnDelete').style.visibility = "visible";
             document.getElementById('gName').value = game.name;
+            document.getElementById('gCover').value = game.cover || '';
             updateScraperLinks();
 
             const area = document.getElementById('dynamicPriceArea');
@@ -419,7 +436,11 @@
             });
             
             const index = document.getElementById('editIndex').value;
-            const gameData = { name: name, cover: "", prices: pricesData };
+            const gameData = { 
+                name: name, 
+                cover: document.getElementById('gCover').value.trim(), 
+                prices: pricesData 
+            };
 
             if (index === "") { games.push(gameData); } 
             else { games[index] = gameData; }
