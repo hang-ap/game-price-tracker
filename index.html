@@ -2,11 +2,11 @@
 <html lang="zh-Hant-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>香港 Game 價紀錄器 (手勢流暢版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>香港 Game 價紀錄器 (穩定修正版)</title>
     
-    <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Game 價紀錄">
@@ -35,11 +35,21 @@
             -webkit-tap-highlight-color: transparent;
         }
 
-        body { background-color: var(--bg-color); color: var(--text-color); padding: 20px; padding-bottom: 100px; overflow-x: hidden; }
+        html, body {
+            touch-action: manipulation;
+        }
+
+        body { 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            padding: 20px; 
+            padding-top: calc(20px + env(safe-area-inset-top));
+            padding-bottom: 100px; 
+            overflow-x: hidden; 
+        }
         header { margin-bottom: 15px; text-align: center; }
         header h1 { font-size: 1.4rem; font-weight: 600; }
 
-        /* iOS 風格分頁切換掣 (Segmented Control) */
         .segmented-control {
             display: flex;
             background: #1c1c1e;
@@ -48,65 +58,32 @@
             margin-bottom: 20px;
         }
         .segment-btn {
-            flex: 1;
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px 0;
-            font-size: 0.9rem;
-            font-weight: 600;
-            border-radius: 7px;
-            cursor: pointer;
-            transition: all 0.2s;
+            flex: 1; background: none; border: none; color: var(--text-muted);
+            padding: 8px 0; font-size: 0.9rem; font-weight: 600; border-radius: 7px;
+            cursor: pointer; transition: all 0.2s;
         }
         .segment-btn.active {
-            background: #3a3a3c;
-            color: #ffffff;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            background: #3a3a3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
         #gameList { display: flex; flex-direction: column; gap: 14px; }
 
-        /* 滑動容器（實現 iOS 向左拉效果的核心） */
         .swipe-container {
-            position: relative;
-            width: 100%;
-            overflow: hidden;
-            border-radius: 16px;
-            background-color: var(--success-color); /* 左滑露出的背景色 */
+            position: relative; width: 100%; overflow: hidden; border-radius: 16px;
+            background-color: var(--success-color);
         }
-        .swipe-container.back-to-price {
-            background-color: var(--accent-color);
-        }
+        .swipe-container.back-to-price { background-color: var(--accent-color); }
 
-        /* 主畫面卡片主體 */
         .game-row {
-            background-color: var(--card-bg);
-            padding: 14px;
-            display: flex;
-            align-items: flex-start;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            cursor: pointer;
-            position: relative;
-            z-index: 2;
-            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-            width: 100%;
+            background-color: var(--card-bg); padding: 14px; display: flex; align-items: flex-start;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; position: relative; z-index: 2;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%;
         }
         
-        /* 隱藏在後面的滑動按鈕 */
         .swipe-action-btn {
-            position: absolute;
-            top: 0; right: 0; bottom: 0;
-            width: 80px;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            color: white;
-            font-weight: bold;
-            font-size: 0.85rem;
-            z-index: 1;
-            cursor: pointer;
+            position: absolute; top: 0; right: 0; bottom: 0; width: 80px;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            color: white; font-weight: bold; font-size: 0.85rem; z-index: 1; cursor: pointer;
         }
 
         .game-cover-wrapper {
@@ -124,6 +101,12 @@
             background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 6px; font-size: 0.85rem;
         }
 
+        /* 🚀 新增：最平項目外框微調（可選用） */
+        .main-price-item.cheapest-row {
+            background: rgba(52, 199, 89, 0.08);
+            border: 1px solid rgba(52, 199, 89, 0.2);
+        }
+
         .platform-badge { font-size: 0.7rem; font-weight: bold; padding: 2px 5px; border-radius: 4px; color: white; text-transform: uppercase; }
         .badge-switch { background-color: var(--color-switch); }
         .badge-ps5 { background-color: var(--color-ps5); }
@@ -137,8 +120,13 @@
 
         .price-source { color: var(--text-muted); margin-left: 6px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .price-num { color: #ffcc00; font-weight: bold; }
+        
+        /* 🚀 新增：最平價錢文字變綠色與加粗 */
+        .price-num.is-cheapest {
+            color: var(--success-color);
+            font-weight: 800;
+        }
 
-        /* 彈出表單 (Modal) */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); justify-content: center; align-items: flex-end; z-index: 1000;
@@ -177,7 +165,6 @@
         .btn-add-price-row { background: #2c2c2e; color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; margin-bottom: 15px; }
         .btn-main-submit { background-color: var(--success-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(52,199,89,0.3); margin-top: 10px; }
 
-        /* 內置鍵盤 */
         .custom-keyboard {
             background: #2c2c2e; margin: 10px -20px -20px -20px; padding: 15px; padding-bottom: calc(15px + env(safe-area-inset-bottom));
             display: grid; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 10px; border-top: 1px solid #3a3a3c;
@@ -187,7 +174,6 @@
             background: #3a3a3c; color: white; border: none; border-radius: 10px; padding: 12px 0; font-size: 1.3rem; font-weight: 600; cursor: pointer;
             display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
         }
-        .key:active { background: #555557; }
         .key.action-key { background: #48484a; font-size: 1rem; }
         .key.delete-key { background: var(--danger-color); }
         .key.done-key { background: var(--accent-color); grid-row: span 2; height: 100%; font-size: 1.1rem; }
@@ -195,6 +181,18 @@
         .form-btns-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-text { background: none; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
         .empty-tips { text-align: center; color: var(--text-muted); margin-top: 60px; font-size: 0.9rem; }
+        #emptyTips { display: none; }
+        #btnDelete { visibility: hidden; }
+        #modalTitle { font-size: 1.1rem; }
+        #dynamicPriceArea { margin-top: 0; }
+        #gameForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        
+        #fabBtn { 
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); 
+            background-color: var(--accent-color); color: white; padding: 14px 28px; 
+            border-radius: 30px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,122,255,0.4); 
+            border: none; font-size: 1rem; z-index: 999; 
+        }
     </style>
 </head>
 <body>
@@ -203,29 +201,25 @@
         <h1>🎮 香港 Game 價紀錄</h1>
     </header>
 
-    <!-- iOS 頂部切換鈕 -->
     <div class="segmented-control">
         <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">🔍 格價中</button>
         <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">📦 已買在庫</button>
     </div>
 
-    <!-- 列表容器 -->
     <div id="gameList"></div>
     <div id="emptyTips" class="empty-tips">未有紀錄，撳下面加第一隻 Game 啦！</div>
 
-    <!-- 底部固定新增按鈕 -->
-    <button id="fabBtn" style="position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background-color: var(--accent-color); color: white; padding: 14px 28px; border-radius: 30px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,122,255,0.4); border: none; font-size: 1rem; z-index: 999;" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
+    <button id="fabBtn" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
 
-    <!-- 編輯視窗 -->
     <div id="gameModal" class="modal">
         <div class="modal-content">
             <div class="form-btns-top">
                 <button type="button" class="btn-text" style="color:var(--danger-color);" id="btnDelete" onclick="deleteGame()">刪除遊戲</button>
-                <h3 id="modalTitle" style="font-size:1.1rem;">遊戲價格詳情</h3>
+                <h3 id="modalTitle">遊戲價格詳情</h3>
                 <button type="button" class="btn-text" style="color:var(--accent-color);" onclick="closeModal()">取消</button>
             </div>
 
-            <form id="gameForm" onsubmit="event.preventDefault();" style="display:flex; flex-direction:column; flex:1; overflow:hidden;">
+            <form id="gameForm" onsubmit="event.preventDefault();">
                 <div class="modal-body" id="modalBody">
                     <input type="hidden" id="editIndex" value="">
 
@@ -242,7 +236,7 @@
                         <input type="url" id="gCover" placeholder="https://example.com/image.png" onfocus="hideCustomKeyboard()">
                     </div>
                     
-                    <div class="form-group" style="margin-top: 15px;">
+                    <div class="form-group">
                         <label>價格紀錄（點擊價錢欄位入數）</label>
                         <div id="dynamicPriceArea"></div>
                         <button type="button" class="btn-add-price-row" onclick="addPriceRowWithScroll('switch', '一手', '', '')">＋ 新增價格欄位</button>
@@ -252,104 +246,116 @@
                 </div>
             </form>
 
-            <!-- 數字鍵盤 -->
             <div class="custom-keyboard" id="customKeyboard">
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '1')">1</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '2')">2</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '3')">3</button>
-                <button type="button" class="key action-key delete-key" ontouchstart="handleKeyPress(event, 'BACK')">⌫</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '1')">1</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '2')">2</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '3')">3</button>
+                <button type="button" class="key action-key delete-key" onclick="handleKeyPress(event, 'BACK')">⌫</button>
                 
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '4')">4</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '5')">5</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '6')">6</button>
-                <button type="button" class="key action-key done-key" ontouchstart="handleKeyDone(event)">完成<br>🔽</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '4')">4</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '5')">5</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '6')">6</button>
+                <button type="button" class="key action-key done-key" onclick="handleKeyDone(event)">完成<br>🔽</button>
                 
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '7')">7</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '8')">8</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '9')">9</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '7')">7</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '8')">8</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '9')">9</button>
                 
-                <button type="button" class="key action-key" ontouchstart="handleKeyPress(event, 'CLEAR')">Clear</button>
-                <button type="button" class="key" style="grid-column: span 2;" ontouchstart="handleKeyPress(event, '0')">0</button>
+                <button type="button" class="key action-key" onclick="handleKeyPress(event, 'CLEAR')">Clear</button>
+                <button type="button" class="key" style="grid-column: span 2;" onclick="handleKeyPress(event, '0')">0</button>
             </div>
         </div>
     </div>
 
     <script>
-        // 預設測試數據加上了 isBought 狀態標記
         const advancedTestTemplate = [
             { 
                 name: "魔物獵人 荒野 Monster Hunter Wilds", 
-                cover: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=150", 
+                cover: "", 
                 isBought: false,
                 prices: [
-                    { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" }
-                ]
-            },
-            { 
-                name: "薩爾達傳說 王國之淚", 
-                cover: "", 
-                isBought: true, // 預設塞一隻在已買
-                prices: [
-                    { platform: "switch", condition: "一手", note: "信和購入", price: "385" }
+                    { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" },
+                    { platform: "ps5", condition: "一手", note: "信和地庫", price: "399" },
+                    { platform: "ps5", condition: "一手", note: "PS Store 數碼", price: "568" }
                 ]
             }
         ];
 
-        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || advancedTestTemplate;
-        let currentTab = 'price'; // 'price' 或 'bought'
-        let currentActivePriceInput = null;
+        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5'));
+        if (!games || !Array.isArray(games)) {
+            games = advancedTestTemplate;
+            localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
+        }
 
-        // 滑動手勢全局暫存變數
+        let currentTab = 'price'; 
+        let currentActivePriceInput = null;
         let touchStartX = 0;
         let activeSwipeContainer = null;
 
+        // 🚀 修正後的渲染功能：加入了智能尋找最平價格邏輯
         function renderGames() {
             const listEl = document.getElementById('gameList');
             const tipsEl = document.getElementById('emptyTips');
             listEl.innerHTML = '';
 
-            // 根據分頁過濾遊戲
-            const filteredGames = games.filter(g => currentTab === 'bought' ? g.isBought === true : !g.isBought);
+            let hasVisibleGame = false;
 
-            if (filteredGames.length === 0) { 
-                tipsEl.style.display = 'block'; 
-                tipsEl.innerText = currentTab === 'bought' ? '收藏庫空空如也，向左拉格價中嘅 Game 移入黎啦！' : '清單無紀錄，撳下面加第一隻 Game！';
-                return; 
-            } else { 
-                tipsEl.style.display = 'none'; 
-            }
-
-            games.forEach((game, index) => {
-                // 如果這隻 Game 不屬於當前 Tab，直接跳過不渲染
+            games.forEach((game, realIndex) => {
                 if (currentTab === 'bought' && !game.isBought) return;
                 if (currentTab === 'price' && game.isBought) return;
 
+                hasVisibleGame = true;
+
                 const swipeContainer = document.createElement('div');
                 swipeContainer.className = 'swipe-container' + (currentTab === 'bought' ? ' back-to-price' : '');
-                swipeContainer.id = `swipe_id_${index}`;
+                swipeContainer.id = `swipe_id_${realIndex}`;
 
-                // 後方的快捷滑動按鈕
                 const actionBtnHtml = currentTab === 'price'
-                    ? `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${index}, true)">💰<br>已買</div>`
-                    : `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${index}, false)">🔄<br>格價</div>`;
+                    ? `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, true)">💰<br>已買</div>`
+                    : `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, false)">🔄<br>格價</div>`;
+
+                // --- 🚀 開始計算最平渠道核心邏輯 ---
+                let minPriceValue = Infinity;
+                let minPriceIndex = -1;
+
+                if (game.prices && game.prices.length > 0) {
+                    game.prices.forEach((p, pIdx) => {
+                        // 過濾空值、文字，只抽取能轉成浮點數字的價錢進行比較
+                        if (p.price && p.price.trim() !== "") {
+                            const numericPrice = parseFloat(p.price);
+                            if (!isNaN(numericPrice) && numericPrice < minPriceValue) {
+                                minPriceValue = numericPrice;
+                                minPriceIndex = pIdx;
+                            }
+                        }
+                    });
+                }
+                // --- 🚀 結束計算 ---
 
                 let pricesHtml = '';
                 if (game.prices && game.prices.length > 0) {
-                    game.prices.forEach(p => {
+                    game.prices.forEach((p, pIdx) => {
                         const condClass = p.condition === '二手' ? 'badge-used' : 'badge-new';
+                        
+                        // 判斷此項目是否為最平項目
+                        const isCheapest = (pIdx === minPriceIndex && minPriceValue !== Infinity);
+                        const cheapestRowClass = isCheapest ? 'cheapest-row' : '';
+                        const cheapestNumClass = isCheapest ? 'is-cheapest' : '';
+                        const cheapestBadge = isCheapest ? '🏷️ ' : '';
+
                         pricesHtml += `
-                            <div class="main-price-item">
+                            <div class="main-price-item ${cheapestRowClass}">
                                 <div>
                                     <span class="platform-badge badge-${p.platform}">${p.platform}</span>
                                     <span class="condition-badge ${condClass}">${p.condition || '一手'}</span>
                                     <span class="price-source">${p.note || ''}</span>
                                 </div>
-                                <span class="price-num">$${p.price || '-'}</span>
+                                <span class="price-num ${cheapestNumClass}">${cheapestBadge}$${p.price || '-'}</span>
                             </div>
                         `;
                     });
                 } else {
-                    pricesHtml = `<div style="color:var(--text-muted); font-size:0.8rem;">暫無價格紀錄</div>`;
+                    pricesHtml = `<div class="price-source">暫無價格紀錄</div>`;
                 }
 
                 const coverHtml = game.cover 
@@ -359,11 +365,11 @@
 
                 swipeContainer.innerHTML = `
                     ${actionBtnHtml}
-                    <div class="game-row" id="row_id_${index}" 
-                         onclick="openEditModal(${index})"
+                    <div class="game-row" id="row_id_${realIndex}" 
+                         onclick="openEditModal(${realIndex})"
                          ontouchstart="handleTouchStart(event)" 
-                         ontouchmove="handleTouchMove(event, ${index})" 
-                         ontouchend="handleTouchEnd(event, ${index})">
+                         ontouchmove="handleTouchMove(event, ${realIndex})" 
+                         ontouchend="handleTouchEnd(event, ${realIndex})">
                         <div class="game-cover-wrapper">${coverHtml}</div>
                         <div class="game-right-info">
                             <div class="game-row-title">${game.name}</div>
@@ -373,30 +379,35 @@
                 `;
                 listEl.appendChild(swipeContainer);
             });
+
+            if (!hasVisibleGame) {
+                tipsEl.style.display = 'block';
+                tipsEl.innerText = currentTab === 'bought' ? '收藏庫空空如也，向左拉格價中嘅 Game 移入嚟啦！' : '清單無紀錄，撳下面加第一隻 Game！';
+            } else {
+                tipsEl.style.display = 'none';
+            }
         }
 
-        // 切換分頁
         function switchTab(tab) {
             currentTab = tab;
             document.getElementById('btnTabPrice').classList.toggle('active', tab === 'price');
             document.getElementById('btnTabBought').classList.toggle('active', tab === 'bought');
-            // 已買清單隱藏新增按鈕，防止混亂
             document.getElementById('fabBtn').style.display = tab === 'bought' ? 'none' : 'block';
+            if (activeSwipeContainer) activeSwipeContainer = null;
             renderGames();
         }
 
-        // 切換 買咗/格價 狀態
         function toggleBoughtStatus(index, status) {
             games[index].isBought = status;
             localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
+            activeSwipeContainer = null;
             renderGames();
         }
 
-        /* 📱 iOS 原生左滑手勢邏輯 */
         function handleTouchStart(e) {
-            // 如果之前有打開的滑動，先收回
             if (activeSwipeContainer) {
-                activeSwipeContainer.querySelector('.game-row').style.transform = 'translateX(0px)';
+                const openRow = activeSwipeContainer.querySelector('.game-row');
+                if (openRow) openRow.style.transform = 'translateX(0px)';
             }
             touchStartX = e.touches[0].clientX;
         }
@@ -406,12 +417,9 @@
             const diffX = touchStartX - currentX;
             const row = document.getElementById(`row_id_${index}`);
 
-            // 只處理向左拉 (diffX > 0)
             if (diffX > 10) {
-                // 限制最大拉動距離為 80px (按鈕寬度)
                 const moveX = Math.min(diffX, 80);
                 row.style.transform = `translateX(-${moveX}px)`;
-                // 防止網頁上下捲動干擾拉動
                 if(diffX > 30) e.preventDefault();
             }
         }
@@ -422,7 +430,6 @@
             const currentX = e.changedTouches[0].clientX;
             const diffX = touchStartX - currentX;
 
-            // 如果拉動超過 40px，保持滑開狀態，否則彈回
             if (diffX > 40) {
                 row.style.transform = 'translateX(-80px)';
                 activeSwipeContainer = container;
@@ -430,6 +437,7 @@
                 row.style.transform = 'translateX(0px)';
                 activeSwipeContainer = null;
             }
+            touchStartX = 0;
         }
 
         function updateScraperLinks() {
@@ -524,7 +532,6 @@
         }
 
         function openEditModal(index) {
-            // 如果當前卡片處於滑開狀態，點擊它只會收回滑動，不彈出視窗
             const row = document.getElementById(`row_id_${index}`);
             if (row && row.style.transform !== '' && row.style.transform !== 'translateX(0px)') {
                 row.style.transform = 'translateX(0px)';
