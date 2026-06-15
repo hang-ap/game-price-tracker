@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (圖鑑雙視角版)</title>
+    <title>香港 Game 價紀錄器 (Wallet 疊卡特效版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -15,18 +15,47 @@
         :root {
             --bg-color: #121212;
             --card-bg: #1e1e1e;
+            --input-bg: #2c2c2e;
+            --input-border: #3a3a3c;
+            --text-color: #ffffff;
+            --text-muted: #aaaaaa;
+            --item-row-bg: rgba(255, 255, 255, 0.05);
+            --keyboard-bg: #2c2c2e;
+            --key-bg: #3a3a3c;
+            --key-active: #555557;
+            
             --accent-color: #007aff;
             --danger-color: #ff3b30;
             --success-color: #34c759;
             --warning-color: #ff9500;
-            --text-color: #ffffff;
-            --text-muted: #aaaaaa;
             
             --color-switch: #e60012;
             --color-ps5: #00439c;
             --color-ps4: #2e6db4;
             --color-xbox: #107c10;
             --color-pc: #47bbff;
+
+            /* 🚀 卡帶專屬漸變色組合 */
+            --gradient-default: linear-gradient(135deg, #2c2c2e, #1c1c1e);
+            --gradient-switch: linear-gradient(135deg, #e60012, #8b000b);
+            --gradient-ps5: linear-gradient(135deg, #00439c, #001c42);
+            --gradient-ps4: linear-gradient(135deg, #2e6db4, #143d6b);
+            --gradient-xbox: linear-gradient(135deg, #107c10, #063c06);
+            --gradient-pc: linear-gradient(135deg, #1f94e5, #0b4e7c);
+        }
+
+        body.light-theme {
+            --bg-color: #f2f2f7;
+            --card-bg: #ffffff;
+            --input-bg: #e5e5ea;
+            --input-border: #d1d1d6;
+            --text-color: #000000;
+            --text-muted: #6e6e73;
+            --item-row-bg: rgba(0, 0, 0, 0.04);
+            --keyboard-bg: #d1d3d9;
+            --key-bg: #ffffff;
+            --key-active: #e5e5ea;
+            --gradient-default: linear-gradient(135deg, #ffffff, #e5e5ea);
         }
 
         * {
@@ -44,92 +73,84 @@
             color: var(--text-color); 
             padding: 20px; 
             padding-top: calc(20px + env(safe-area-inset-top));
-            padding-bottom: 100px; 
-            overflow-x: hidden; 
+            padding-bottom: 140px; 
+            overflow-x: hidden;
+            transition: background-color 0.3s, color 0.3s;
         }
         header { margin-bottom: 15px; text-align: center; }
         header h1 { font-size: 1.4rem; font-weight: 600; }
 
         .segmented-control {
-            display: flex;
-            background: #1c1c1e;
-            padding: 2px;
-            border-radius: 9px;
-            margin-bottom: 12px;
+            display: flex; background: #1c1c1e; padding: 2px; border-radius: 9px; margin-bottom: 12px;
         }
+        body.light-theme .segmented-control { background: #e3e3e6; }
         .segment-btn {
             flex: 1; background: none; border: none; color: var(--text-muted);
             padding: 8px 0; font-size: 0.9rem; font-weight: 600; border-radius: 7px;
             cursor: pointer; transition: all 0.2s;
         }
-        .segment-btn.active {
-            background: #3a3a3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
-        }
+        .segment-btn.active { background: #3a3a3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        body.light-theme .segment-btn.active { background: #ffffff; color: #000000; }
 
-        /* 🚀 新增：檢視模式切換小按鈕樣式 */
-        .view-toggle-container {
-            display: flex;
-            justify-content: flex-end;
-            gap: 6px;
-            margin-bottom: 16px;
-        }
+        .view-toggle-container { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 16px; }
         .view-btn {
-            background: #1c1c1e;
-            border: none;
-            color: var(--text-muted);
-            padding: 6px 12px;
-            font-size: 0.8rem;
-            font-weight: 600;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: background 0.2s, color 0.2s;
+            background: #1c1c1e; border: none; color: var(--text-muted); padding: 6px 12px; font-size: 0.8rem;
+            font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s, color 0.2s;
         }
-        .view-btn.active {
-            background: var(--accent-color);
-            color: #ffffff;
+        body.light-theme .view-btn { background: #e3e3e6; }
+        .view-btn.active { background: var(--accent-color); color: #ffffff; }
+
+        /* 🚀 疊卡視覺 (Apple Wallet Stack View) 核心佈局 */
+        #gameList { 
+            display: flex; flex-direction: column; 
+            gap: 0px; /* 移除間距，改靠 sticky 重疊 */
+            padding-top: 10px;
         }
 
-        /* 預設列表樣式 */
-        #gameList { display: flex; flex-direction: column; gap: 14px; }
-
-        /* 🚀 新增：圖鑑模式下核心 CSS Grid 佈局 (固定每排顯示 2 隻遊戲) */
-        #gameList.grid-view {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 12px;
-        }
-
-        .swipe-container {
-            position: relative; width: 100%; overflow: hidden; border-radius: 16px;
+        /* 🚀 列表模式下的疊卡容器 */
+        #gameList:not(.grid-view) .swipe-container {
+            position: sticky;
+            /* 根據卡片 index 計算卡片停靠頂部的位置，形成密合重疊層次 */
+            top: calc(90px + var(--card-index, 0) * 38px);
+            margin-bottom: 110px; /* 留出底部卡片露出的空間 */
+            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
             background-color: var(--success-color);
+            border-radius: 20px;
         }
-        .swipe-container.back-to-price { background-color: var(--accent-color); }
-
-        /* 圖鑑模式下停用外層滑動背景色 */
-        #gameList.grid-view .swipe-container {
-            background-color: transparent;
-        }
-        /* 圖鑑模式下徹底隱藏滑動按鈕 */
-        #gameList.grid-view .swipe-action-btn {
-            display: none !important;
-        }
+        #gameList:not(.grid-view) .swipe-container.back-to-price { background-color: var(--accent-color); }
 
         .game-row {
-            background-color: var(--card-bg); padding: 14px; display: flex; align-items: flex-start;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; position: relative; z-index: 2;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%;
-            border-radius: 16px; 
+            background-color: var(--card-bg); padding: 16px; display: flex; align-items: flex-start;
+            cursor: pointer; position: relative; z-index: 2;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s; width: 100%; border-radius: 20px; 
+            border: 1px solid rgba(255,255,255,0.05);
         }
+        body.light-theme .game-row { border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
 
-        /* 🚀 新增：圖鑑模式卡片外觀重組 */
-        #gameList.grid-view .game-row {
-            flex-direction: column;
-            align-items: stretch;
-            padding: 10px;
-            height: 100%;
-            transform: none !important; /* 強制重置手勢位移 */
-        }
+        /* 🚀 動態套用平台專屬皮革/漸變質感底色 */
+        .game-row.theme-switch { background: var(--gradient-switch); color: #fff; }
+        .game-row.theme-ps5 { background: var(--gradient-ps5); color: #fff; }
+        .game-row.theme-ps4 { background: var(--gradient-ps4); color: #fff; }
+        .game-row.theme-xbox { background: var(--gradient-xbox); color: #fff; }
+        .game-row.theme-pc { background: var(--gradient-pc); color: #fff; }
         
+        /* 當卡片被套用平台漸變時，微調文字配色確保可讀性 */
+        .game-row[class*="theme-"] .game-row-title { color: #ffffff !important; }
+        .game-row[class*="theme-"] .price-source { color: rgba(255,255,255,0.7) !important; }
+        .game-row[class*="theme-"] .main-price-item { background: rgba(0,0,0,0.2) !important; }
+
+        /* 圖鑑模式 (Grid View) 保持原樣不變 */
+        #gameList.grid-view {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-top: 0;
+        }
+        #gameList.grid-view .swipe-container { background-color: transparent; position: static !important; margin-bottom: 0 !important; box-shadow: none; }
+        #gameList.grid-view .swipe-action-btn { display: none !important; }
+        #gameList.grid-view .game-row {
+            flex-direction: column; align-items: stretch; padding: 10px; height: 100%; transform: none !important;
+            background: var(--card-bg) !important; /* 圖鑑模式維持素色 */
+        }
+        #gameList.grid-view .game-row-title { color: var(--text-color) !important; }
+
         .swipe-action-btn {
             position: absolute; top: 0; right: 0; bottom: 0; width: 80px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -137,56 +158,31 @@
         }
 
         .game-cover-wrapper {
-            width: 75px; height: 95px; border-radius: 10px; overflow: hidden; background: #2c2c2e;
+            width: 75px; height: 95px; border-radius: 10px; overflow: hidden; background: var(--input-bg);
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 16px; 
+            box-shadow: 2px 4px 10px rgba(0,0,0,0.4);
         }
-
-        /* 🚀 新增：圖鑑模式下「大封面圖片」滿版顯示 */
-        #gameList.grid-view .game-cover-wrapper {
-            width: 100%;
-            height: 140px; /* 控制大封面安全比例 */
-            margin-right: 0;
-            margin-bottom: 8px;
-        }
-
+        #gameList.grid-view .game-cover-wrapper { width: 100%; height: 140px; margin-right: 0; margin-bottom: 8px; }
         .game-cover-img { width: 100%; height: 100%; object-fit: cover; }
         .game-cover-placeholder { font-size: 1.8rem; }
-        
         .game-right-info { flex: 1; min-width: 0; }
         
-        /* 🚀 新增：圖鑑模式下文字資訊模組 */
         #gameList.grid-view .game-right-info {
-            width: 100%;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            flex-grow: 1;
+            width: 100%; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;
         }
 
-        .game-row-title { font-size: 1.15rem; font-weight: bold; margin-bottom: 8px; color: #ffffff; }
-
-        /* 圖鑑模式下限縮標題高度，防止文字太長破壞對齊 */
+        .game-row-title { font-size: 1.15rem; font-weight: bold; margin-bottom: 8px; color: var(--text-color); }
         #gameList.grid-view .game-row-title {
-            font-size: 0.95rem;
-            margin-bottom: 6px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            height: 2.6rem; 
+            font-size: 0.95rem; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; height: 2.6rem; 
         }
 
         .game-row-prices-container { display: flex; flex-direction: column; gap: 6px; }
         .main-price-item {
             display: flex; align-items: center; justify-content: space-between;
-            background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 6px; font-size: 0.85rem;
+            background: var(--item-row-bg); padding: 5px 8px; border-radius: 6px; font-size: 0.85rem;
         }
-
-        .main-price-item.cheapest-row {
-            background: rgba(52, 199, 89, 0.08);
-            border: 1px solid rgba(52, 199, 89, 0.2);
-        }
+        .main-price-item.cheapest-row { background: rgba(52, 199, 89, 0.12); border: 1px solid rgba(52, 199, 89, 0.3); }
 
         .platform-badge { font-size: 0.7rem; font-weight: bold; padding: 2px 5px; border-radius: 4px; color: white; text-transform: uppercase; }
         .badge-switch { background-color: var(--color-switch); }
@@ -201,12 +197,25 @@
 
         .price-source { color: var(--text-muted); margin-left: 6px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .price-num { color: #ffcc00; font-weight: bold; }
-        
-        .price-num.is-cheapest {
-            color: var(--success-color);
-            font-weight: 800;
+        body.light-theme .price-num { color: #d97706; }
+        .game-row[class*="theme-"] .price-num { color: #ffcc00 !important; } /* 漸變卡片下數字顏色鎖定 */
+        .price-num.is-cheapest { color: var(--success-color) !important; font-weight: 800; }
+
+        /* 設定頁面排版 */
+        #settingsPage { display: none; flex-direction: column; gap: 20px; }
+        .settings-group { background: var(--card-bg); border-radius: 14px; padding: 4px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+        .settings-group-title { font-size: 0.8rem; color: var(--text-muted); text-transform: uppercase; padding-left: 8px; margin-bottom: 6px; font-weight: 600; }
+        .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
+        body.light-theme .settings-row { border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .settings-row:last-child { border-bottom: none; }
+        .settings-label { font-size: 1rem; font-weight: 500; }
+
+        #backupTextarea {
+            width: 100%; height: 180px; background: var(--bg-color); border: 2px solid var(--input-border);
+            color: var(--text-color); font-family: monospace; font-size: 16px; padding: 12px; border-radius: 10px; resize: none; outline: none; margin-bottom: 15px;
         }
 
+        /* Modals */
         .modal {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.85); justify-content: center; align-items: flex-end; z-index: 1000;
@@ -222,51 +231,47 @@
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
         .form-group input, .form-group select {
-            width: 100%; padding: 10px; background: #2c2c2e; border: 2px solid #3a3a3c; border-radius: 8px; color: white; font-size: 1rem; outline: none;
+            width: 100%; padding: 10px; background: var(--input-bg); border: 2px solid var(--input-border); border-radius: 8px; color: var(--text-color); font-size: 1rem; outline: none;
         }
 
         .scraper-shortcuts { display: flex; gap: 8px; margin-top: 5px; }
         .btn-shortcut {
-            flex: 1; background: #2c2c2e; border: 1px solid #555; color: #ccc; padding: 8px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center;
+            flex: 1; background: var(--input-bg); border: 1px solid var(--input-border); color: var(--text-color); padding: 8px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; cursor: pointer; text-decoration: none; text-align: center;
         }
 
-        .edit-price-row {
-            display: flex; gap: 6px; align-items: center; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 2px solid transparent;
-        }
-        .edit-price-row.active-row { border-color: var(--accent-color); background: #222e3c; }
-        
-        .edit-price-row select { width: 85px; padding: 6px; font-size: 16px; border-radius: 6px; color: white; background: #2c2c2e; border: 1px solid #3a3a3c; }
+        .edit-price-row { display: flex; gap: 6px; align-items: center; background: var(--item-row-bg); padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 2px solid transparent; }
+        .edit-price-row.active-row { border-color: var(--accent-color); background: rgba(0, 122, 255, 0.1); }
+        .edit-price-row select { width: 85px; padding: 6px; font-size: 16px; border-radius: 6px; color: var(--text-color); background: var(--input-bg); border: 1px solid var(--input-border); }
         .edit-price-row .input-note { flex: 1; padding: 6px; font-size: 16px; border-radius: 6px; min-width: 0; }
-        .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 16px; border-radius: 6px; background: #1c1c1e; }
-        
+        .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 16px; border-radius: 6px; background: var(--input-bg); }
         .btn-toggle-condition { padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: bold; color: white; cursor: pointer; min-width: 45px; }
         .toggle-new { background-color: var(--accent-color); }
         .toggle-used { background-color: var(--warning-color); }
 
         .btn-remove-price { background: none; border: none; color: var(--danger-color); font-size: 1.1rem; cursor: pointer; padding: 0 2px; }
-        .btn-add-price-row { background: #2c2c2e; color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; margin-bottom: 15px; }
+        .btn-add-price-row { background: var(--input-bg); color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; margin-bottom: 15px; }
         .btn-main-submit { background-color: var(--success-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(52,199,89,0.3); margin-top: 10px; }
 
+        /* 鍵盤 */
         .custom-keyboard {
-            background: #2c2c2e; margin: 10px -20px -20px -20px; padding: 15px; padding-bottom: calc(15px + env(safe-area-inset-bottom));
-            display: grid; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 10px; border-top: 1px solid #3a3a3c;
-            display: none; z-index: 1100;
+            background: var(--keyboard-bg); margin: 10px -20px -20px -20px; padding: 15px; padding-bottom: calc(15px + env(safe-area-inset-bottom));
+            display: grid; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 10px; border-top: 1px solid var(--input-border); display: none; z-index: 1100;
         }
         .key {
-            background: #3a3a3c; color: white; border: none; border-radius: 10px; padding: 12px 0; font-size: 1.3rem; font-weight: 600; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            background: var(--key-bg); color: var(--text-color); border: none; border-radius: 10px; padding: 12px 0; font-size: 1.3rem; font-weight: 600; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15);
         }
-        .key.action-key { background: #48484a; font-size: 1rem; }
-        .key.delete-key { background: var(--danger-color); }
-        .key.done-key { background: var(--accent-color); grid-row: span 2; height: 100%; font-size: 1.1rem; }
+        .key:active { background: var(--key-active); }
+        .key.action-key { background: #48484a; color: white; font-size: 1rem; }
+        body.light-theme .key.action-key { background: #aaadb3; }
+        .key.delete-key { background: var(--danger-color); color: white; }
+        .key.done-key { background: var(--accent-color); color: white; grid-row: span 2; height: 100%; font-size: 1.1rem; }
 
         .form-btns-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-text { background: none; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
         .empty-tips { text-align: center; color: var(--text-muted); margin-top: 60px; font-size: 0.9rem; }
         #emptyTips { display: none; }
         #btnDelete { visibility: hidden; }
-        #modalTitle { font-size: 1.1rem; }
-        #dynamicPriceArea { margin-top: 0; }
         #gameForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
         
         #fabBtn { 
@@ -286,15 +291,38 @@
     <div class="segmented-control">
         <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">🔍 格價中</button>
         <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">📦 已買在庫</button>
+        <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">⚙️ 系統設定</button>
     </div>
 
-    <div class="view-toggle-container">
+    <div class="view-toggle-container" id="viewToggleArea">
         <button class="view-btn" id="btnListView" onclick="setViewMode('list')">☰ 列表</button>
         <button class="view-btn" id="btnGridView" onclick="setViewMode('grid')">🎴 圖鑑</button>
     </div>
 
     <div id="gameList"></div>
     <div id="emptyTips" class="empty-tips">未有紀錄，撳下面加第一隻 Game 啦！</div>
+
+    <div id="settingsPage">
+        <div class="settings-group-title">視覺外觀</div>
+        <div class="settings-group">
+            <div class="settings-row">
+                <span class="settings-label">淺色 / 深色模式</span>
+                <button class="view-btn active" id="themeToggleBtn" onclick="toggleTheme()">🌙 深色模式</button>
+            </div>
+        </div>
+
+        <div class="settings-group-title">數據安全防護</div>
+        <div class="settings-group">
+            <div class="settings-row">
+                <span class="settings-label">備份當前本地數據</span>
+                <button class="view-btn" style="background:var(--accent-color); color:white;" onclick="openBackupModal()">💾 匯出備份</button>
+            </div>
+            <div class="settings-row">
+                <span class="settings-label">導入備份還原名單</span>
+                <button class="view-btn" style="background:var(--warning-color); color:white;" onclick="openRestoreModal()">🔄 匯入還原</button>
+            </div>
+        </div>
+    </div>
 
     <button id="fabBtn" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
 
@@ -335,7 +363,7 @@
 
             <div class="custom-keyboard" id="customKeyboard">
                 <button type="button" class="key" onclick="handleKeyPress(event, '1')">1</button>
-                <button type="button" class="key" onclick="meaninglessPlaceholder=false; handleKeyPress(event, '2')">2</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '2')">2</button>
                 <button type="button" class="key" onclick="handleKeyPress(event, '3')">3</button>
                 <button type="button" class="key action-key delete-key" onclick="handleKeyPress(event, 'BACK')">⌫</button>
                 
@@ -354,6 +382,21 @@
         </div>
     </div>
 
+    <div id="backupModal" class="modal">
+        <div class="modal-content" style="height: auto; max-height: 80vh;">
+            <div class="form-btns-top">
+                <span style="width:50px;"></span>
+                <h3 id="backupModalTitle">數據備份與還原</h3>
+                <button type="button" class="btn-text" style="color:var(--accent-color);" onclick="closeBackupModal()">關閉</button>
+            </div>
+            <div style="padding-bottom:20px;">
+                <textarea id="backupTextarea" placeholder="備庫代碼區域..."></textarea>
+                <button type="button" id="btnCopyBackup" class="btn-main-submit" onclick="copyBackupData()">📋 一鍵複製備份字串</button>
+                <button type="button" id="btnConfirmRestore" class="btn-main-submit" style="background-color:var(--warning-color);" onclick="confirmRestoreData()">⚠️ 確認導入還原數據</button>
+            </div>
+        </div>
+    </div>
+
     <script>
         const advancedTestTemplate = [
             { 
@@ -362,55 +405,79 @@
                 isBought: false,
                 prices: [
                     { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" },
-                    { platform: "ps5", condition: "一手", note: "信和地庫", price: "399" },
-                    { platform: "ps5", condition: "一手", note: "PS Store 數碼", price: "568" }
+                    { platform: "pc", condition: "一手", note: "Steam 數位", price: "450" }
+                ]
+            },
+            {
+                name: "薩爾達傳說 王國之淚",
+                cover: "",
+                isBought: false,
+                prices: [
+                    { platform: "switch", condition: "二手", note: "信和購入", price: "260" }
                 ]
             }
         ];
 
         let games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || advancedTestTemplate;
-
         let currentTab = 'price'; 
-        // 🚀 新增：從本地緩存中讀取「檢視模式」，預設為列表模式
         let currentViewMode = localStorage.getItem('hk_game_view_mode') || 'list'; 
-        
+        let currentTheme = localStorage.getItem('hk_game_theme') || 'dark';
+
         let currentActivePriceInput = null;
         let touchStartX = 0;
         let activeSwipeContainer = null;
 
-        // 🚀 新增：切換模式控制函數
+        function initTheme() {
+            if (currentTheme === 'light') {
+                document.body.classList.add('light-theme');
+                document.getElementById('themeToggleBtn').innerText = "☀️ 淺色模式";
+                document.getElementById('themeToggleBtn').style.background = "var(--success-color)";
+            } else {
+                document.body.classList.remove('light-theme');
+                document.getElementById('themeToggleBtn').innerText = "🌙 深色模式";
+                document.getElementById('themeToggleBtn').style.background = "#3a3a3c";
+            }
+        }
+
+        function toggleTheme() {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            localStorage.setItem('hk_game_theme', currentTheme);
+            initTheme();
+            renderGames(); // 主題切換時重新渲染疊卡底色
+        }
+
         function setViewMode(mode) {
             currentViewMode = mode;
-            localStorage.setItem('hk_game_view_mode', mode); // 持久化記錄模式
-            
+            localStorage.setItem('hk_game_view_mode', mode); 
             document.getElementById('btnListView').classList.toggle('active', mode === 'list');
             document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
             
             const listEl = document.getElementById('gameList');
-            if (mode === 'grid') {
-                listEl.classList.add('grid-view');
-            } else {
-                listEl.classList.remove('grid-view');
-            }
+            if (mode === 'grid') { listEl.classList.add('grid-view'); } 
+            else { listEl.classList.remove('grid-view'); }
             renderGames();
         }
 
+        // 🚀 核心重構：renderGames 加上 Apple Wallet 疊卡特效與動態卡帶色彩適配
         function renderGames() {
             const listEl = document.getElementById('gameList');
             const tipsEl = document.getElementById('emptyTips');
-            listEl.innerHTML = '';
+            if (currentTab === 'settings') return;
 
-            let hasVisibleGame = false;
+            listEl.innerHTML = '';
+            let visibleIndex = 0; // 用於計算純顯示卡片的重疊 sticky index
 
             games.forEach((game, realIndex) => {
                 if (currentTab === 'bought' && !game.isBought) return;
                 if (currentTab === 'price' && game.isBought) return;
 
-                hasVisibleGame = true;
-
                 const swipeContainer = document.createElement('div');
                 swipeContainer.className = 'swipe-container' + (currentTab === 'bought' ? ' back-to-price' : '');
                 swipeContainer.id = `swipe_id_${realIndex}`;
+                
+                // 🚀 將當前顯示卡片的累計 index 傳給 CSS 變數，達成漸進式重疊
+                swipeContainer.style.setProperty('--card-index', visibleIndex);
+                visibleIndex++;
 
                 const actionBtnHtml = currentTab === 'price'
                     ? `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, true)">💰<br>已買</div>`
@@ -431,9 +498,14 @@
                     });
                 }
 
+                // 🚀 根據該遊戲名單的第一個價格平台，動態為卡片套用對應的主題
+                let platformThemeClass = '';
+                if (currentTheme === 'dark' && game.prices && game.prices.length > 0) {
+                    platformThemeClass = ` theme-${game.prices[0].platform}`;
+                }
+
                 let pricesHtml = '';
                 if (game.prices && game.prices.length > 0) {
-                    // 🚀 核心優化：如果處於「圖鑑模式 (Grid)」，強制只顯示最低價錢，排版更極簡
                     if (currentViewMode === 'grid') {
                         if (minPriceIndex !== -1 && minPriceValue !== Infinity) {
                             const p = game.prices[minPriceIndex];
@@ -444,7 +516,6 @@
                                 </div>
                             `;
                         } else {
-                            // 如果沒填任何數字，預設撈第一組字串兜底
                             const p = game.prices[0];
                             pricesHtml = `
                                 <div class="main-price-item" style="justify-content: center; margin-top: auto;">
@@ -454,7 +525,6 @@
                             `;
                         }
                     } else {
-                        // 列表模式 (List) 照原樣顯示完整細節
                         game.prices.forEach((p, pIdx) => {
                             const condClass = p.condition === '二手' ? 'badge-used' : 'badge-new';
                             const isCheapest = (pIdx === minPriceIndex && minPriceValue !== Infinity);
@@ -485,7 +555,7 @@
 
                 swipeContainer.innerHTML = `
                     ${actionBtnHtml}
-                    <div class="game-row" id="row_id_${realIndex}" 
+                    <div class="game-row${platformThemeClass}" id="row_id_${realIndex}" 
                          onclick="openEditModal(${realIndex})"
                          ontouchstart="handleTouchStart(event)" 
                          ontouchmove="handleTouchMove(event, ${realIndex})" 
@@ -500,7 +570,7 @@
                 listEl.appendChild(swipeContainer);
             });
 
-            if (!hasVisibleGame) {
+            if (visibleIndex === 0) {
                 tipsEl.style.display = 'block';
                 tipsEl.innerText = currentTab === 'bought' ? '收藏庫空空如也，向左拉格價中嘅 Game 移入嚟啦！' : '清單無紀錄，撳下面加第一隻 Game！';
             } else {
@@ -512,9 +582,28 @@
             currentTab = tab;
             document.getElementById('btnTabPrice').classList.toggle('active', tab === 'price');
             document.getElementById('btnTabBought').classList.toggle('active', tab === 'bought');
-            document.getElementById('fabBtn').style.display = tab === 'bought' ? 'none' : 'block';
-            if (activeSwipeContainer) activeSwipeContainer = null;
-            renderGames(); // 重新渲染時 currentViewMode 會被保留
+            document.getElementById('btnTabSettings').classList.toggle('active', tab === 'settings');
+            
+            const gameListEl = document.getElementById('gameList');
+            const viewToggleEl = document.getElementById('viewToggleArea');
+            const settingsPageEl = document.getElementById('settingsPage');
+            const tipsEl = document.getElementById('emptyTips');
+            const fabBtnEl = document.getElementById('fabBtn');
+
+            if (tab === 'settings') {
+                gameListEl.style.display = 'none';
+                viewToggleEl.style.display = 'none';
+                tipsEl.style.display = 'none';
+                fabBtnEl.style.display = 'none';
+                settingsPageEl.style.display = 'flex';
+            } else {
+                settingsPageEl.style.display = 'none';
+                gameListEl.style.display = (currentViewMode === 'grid') ? 'grid' : 'flex';
+                viewToggleEl.style.display = 'flex';
+                fabBtnEl.style.display = (tab === 'bought') ? 'none' : 'block';
+                if (activeSwipeContainer) activeSwipeContainer = null;
+                renderGames();
+            }
         }
 
         function toggleBoughtStatus(index, status) {
@@ -524,7 +613,6 @@
             renderGames();
         }
 
-        // 🚀 修正：手勢監聽全部在「圖鑑模式」下自動 return 熔斷阻斷，免除誤滑
         function handleTouchStart(e) {
             if (currentViewMode === 'grid') return;
             if (activeSwipeContainer) {
@@ -564,6 +652,60 @@
             touchStartX = 0;
         }
 
+        function openBackupModal() {
+            const jsonStr = JSON.stringify(games, null, 2);
+            document.getElementById('backupModalTitle').innerText = "匯出本地數據備份";
+            const textarea = document.getElementById('backupTextarea');
+            textarea.value = jsonStr;
+            textarea.readOnly = true; 
+            document.getElementById('btnCopyBackup').style.display = 'block';
+            document.getElementById('btnConfirmRestore').style.display = 'none';
+            document.getElementById('backupModal').style.display = 'flex';
+        }
+
+        function openRestoreModal() {
+            document.getElementById('backupModalTitle').innerText = "匯入備份數據還原";
+            const textarea = document.getElementById('backupTextarea');
+            textarea.value = '';
+            textarea.readOnly = false; 
+            textarea.placeholder = "請喺度貼上你之前複製備份嘅 JSON 純文字字串...";
+            document.getElementById('btnCopyBackup').style.display = 'none';
+            document.getElementById('btnConfirmRestore').style.display = 'block';
+            document.getElementById('backupModal').style.display = 'flex';
+        }
+
+        function closeBackupModal() { document.getElementById('backupModal').style.display = 'none'; }
+
+        function copyBackupData() {
+            const textarea = document.getElementById('backupTextarea');
+            textarea.select();
+            textarea.setSelectionRange(0, 99999); 
+            navigator.clipboard.writeText(textarea.value).then(() => {
+                alert('📋 複製備份成功！你可以去手機備忘錄貼上存檔。');
+            }).catch(() => {
+                alert('複製失敗，請手動點擊全選複製。');
+            });
+        }
+
+        function confirmRestoreData() {
+            const inputTxt = document.getElementById('backupTextarea').value.trim();
+            if (!inputTxt) { alert('請先貼上有效的備份字串！'); return; }
+            try {
+                const parsedData = JSON.parse(inputTxt);
+                if (Array.isArray(parsedData)) {
+                    if (confirm('⚠️ 警告：還原將覆蓋當前手機內的所有紀錄！確定執行還原嗎？')) {
+                        games = parsedData;
+                        localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
+                        closeBackupModal();
+                        switchTab('price'); 
+                        alert('🎉 數據還原成功！已自動跳轉刷新。');
+                    }
+                } else { alert('❌ 還原失敗：貼上的數據結構非遊戲 Array 陣列！'); }
+            } catch (error) {
+                alert('❌ 還原失敗：偵測到錯誤的字串格式！\n\n[原因]: ' + error.message);
+            }
+        }
+
         function updateScraperLinks() {
             const fullName = document.getElementById('gName').value.trim();
             const googleLnk = document.getElementById('lnkGoogle');
@@ -574,11 +716,9 @@
         function addPriceRow(platform = 'switch', condition = '一手', note = '', price = '') {
             const area = document.getElementById('dynamicPriceArea');
             const rowId = 'p_row_' + Date.now() + Math.random().toString(36).substr(2, 5);
-
             const rowDiv = document.createElement('div');
             rowDiv.className = 'edit-price-row';
             rowDiv.id = rowId;
-
             const btnClass = condition === '二手' ? 'toggle-used' : 'toggle-new';
 
             rowDiv.innerHTML = `
@@ -594,7 +734,6 @@
                 <input type="text" class="input-price" placeholder="價錢" value="${price}" readonly onclick="activatePriceKeyboard(this, '${rowId}')">
                 <button type="button" class="btn-remove-price" onclick="document.getElementById('${rowId}').remove()">🗑️</button>
             `;
-
             area.appendChild(rowDiv);
             return { inputPrice: rowDiv.querySelector('.input-price'), id: rowId };
         }
@@ -656,7 +795,6 @@
         }
 
         function openEditModal(index) {
-            // 🚀 修正：只有在「列表模式」滑動被打開時，才執行中斷彈窗邏輯
             if (currentViewMode !== 'grid') {
                 const row = document.getElementById(`row_id_${index}`);
                 if (row && row.style.transform !== '' && row.style.transform !== 'translateX(0px)') {
@@ -714,7 +852,7 @@
             }
 
             localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
-            renderGames();
+            switchTab(currentTab); 
             closeModal();
         }
 
@@ -723,12 +861,12 @@
             if (index !== "" && confirm(`確定要刪除整個 "${games[index].name}" 嗎？`)) {
                 games.splice(index, 1);
                 localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
-                renderGames();
+                switchTab(currentTab);
                 closeModal();
             }
         }
 
-        // 🚀 初始化設定：頁面第一次開檔，強制執行讀取與佈局對接
+        initTheme();
         setViewMode(currentViewMode);
     </script>
 </body>
