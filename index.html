@@ -78,6 +78,7 @@
             background-color: var(--card-bg); padding: 14px; display: flex; align-items: flex-start;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; position: relative; z-index: 2;
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%;
+            border-radius: 16px; /* 🚀 修正：內部卡片同步加上圓角，完美消滅外層綠色角滲漏 Bug */
         }
         
         .swipe-action-btn {
@@ -101,7 +102,6 @@
             background: rgba(255,255,255,0.03); padding: 5px 8px; border-radius: 6px; font-size: 0.85rem;
         }
 
-        /* 🚀 新增：最平項目外框微調（可選用） */
         .main-price-item.cheapest-row {
             background: rgba(52, 199, 89, 0.08);
             border: 1px solid rgba(52, 199, 89, 0.2);
@@ -121,7 +121,6 @@
         .price-source { color: var(--text-muted); margin-left: 6px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .price-num { color: #ffcc00; font-weight: bold; }
         
-        /* 🚀 新增：最平價錢文字變綠色與加粗 */
         .price-num.is-cheapest {
             color: var(--success-color);
             font-weight: 800;
@@ -154,9 +153,12 @@
             display: flex; gap: 6px; align-items: center; background: rgba(255,255,255,0.02); padding: 8px; border-radius: 8px; margin-bottom: 8px; border: 2px solid transparent;
         }
         .edit-price-row.active-row { border-color: var(--accent-color); background: #222e3c; }
-        .edit-price-row select { width: 85px; padding: 6px; font-size: 0.8rem; border-radius: 6px; }
-        .edit-price-row .input-note { flex: 1; padding: 6px; font-size: 0.8rem; border-radius: 6px; min-width: 0; }
-        .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 0.8rem; border-radius: 6px; background: #1c1c1e; }
+        
+        /* 🚀 修正：將彈窗內部所有輸入元件提升至最少 16px，完美封鎖 iOS 聚焦時網頁會亂放大嘅 Bug */
+        .edit-price-row select { width: 85px; padding: 6px; font-size: 16px; border-radius: 6px; color: white; background: #2c2c2e; border: 1px solid #3a3a3c; }
+        .edit-price-row .input-note { flex: 1; padding: 6px; font-size: 16px; border-radius: 6px; min-width: 0; }
+        .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 16px; border-radius: 6px; background: #1c1c1e; }
+        
         .btn-toggle-condition { padding: 6px 8px; border: none; border-radius: 6px; font-size: 0.75rem; font-weight: bold; color: white; cursor: pointer; min-width: 45px; }
         .toggle-new { background-color: var(--accent-color); }
         .toggle-used { background-color: var(--warning-color); }
@@ -248,7 +250,7 @@
 
             <div class="custom-keyboard" id="customKeyboard">
                 <button type="button" class="key" onclick="handleKeyPress(event, '1')">1</button>
-                <button type="button" class="key" onclick="handleKeyPress(event, '2')">2</button>
+                <button type="button" class="key" onclick="meaninglessPlaceholder=false; handleKeyPress(event, '2')">2</button>
                 <button type="button" class="key" onclick="handleKeyPress(event, '3')">3</button>
                 <button type="button" class="key action-key delete-key" onclick="handleKeyPress(event, 'BACK')">⌫</button>
                 
@@ -271,7 +273,7 @@
         const advancedTestTemplate = [
             { 
                 name: "魔物獵人 荒野 Monster Hunter Wilds", 
-                cover: "", 
+                cover: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=150", 
                 isBought: false,
                 prices: [
                     { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" },
@@ -292,7 +294,6 @@
         let touchStartX = 0;
         let activeSwipeContainer = null;
 
-        // 🚀 修正後的渲染功能：加入了智能尋找最平價格邏輯
         function renderGames() {
             const listEl = document.getElementById('gameList');
             const tipsEl = document.getElementById('emptyTips');
@@ -314,13 +315,11 @@
                     ? `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, true)">💰<br>已買</div>`
                     : `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, false)">🔄<br>格價</div>`;
 
-                // --- 🚀 開始計算最平渠道核心邏輯 ---
                 let minPriceValue = Infinity;
                 let minPriceIndex = -1;
 
                 if (game.prices && game.prices.length > 0) {
                     game.prices.forEach((p, pIdx) => {
-                        // 過濾空值、文字，只抽取能轉成浮點數字的價錢進行比較
                         if (p.price && p.price.trim() !== "") {
                             const numericPrice = parseFloat(p.price);
                             if (!isNaN(numericPrice) && numericPrice < minPriceValue) {
@@ -330,14 +329,12 @@
                         }
                     });
                 }
-                // --- 🚀 結束計算 ---
 
                 let pricesHtml = '';
                 if (game.prices && game.prices.length > 0) {
                     game.prices.forEach((p, pIdx) => {
                         const condClass = p.condition === '二手' ? 'badge-used' : 'badge-new';
                         
-                        // 判斷此項目是否為最平項目
                         const isCheapest = (pIdx === minPriceIndex && minPriceValue !== Infinity);
                         const cheapestRowClass = isCheapest ? 'cheapest-row' : '';
                         const cheapestNumClass = isCheapest ? 'is-cheapest' : '';
