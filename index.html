@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (穩定修正版)</title>
+    <title>香港 Game 價紀錄器 (圖鑑雙視角版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -55,7 +55,7 @@
             background: #1c1c1e;
             padding: 2px;
             border-radius: 9px;
-            margin-bottom: 20px;
+            margin-bottom: 12px;
         }
         .segment-btn {
             flex: 1; background: none; border: none; color: var(--text-muted);
@@ -66,7 +66,38 @@
             background: #3a3a3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
         }
 
+        /* 🚀 新增：檢視模式切換小按鈕樣式 */
+        .view-toggle-container {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+            margin-bottom: 16px;
+        }
+        .view-btn {
+            background: #1c1c1e;
+            border: none;
+            color: var(--text-muted);
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+        }
+        .view-btn.active {
+            background: var(--accent-color);
+            color: #ffffff;
+        }
+
+        /* 預設列表樣式 */
         #gameList { display: flex; flex-direction: column; gap: 14px; }
+
+        /* 🚀 新增：圖鑑模式下核心 CSS Grid 佈局 (固定每排顯示 2 隻遊戲) */
+        #gameList.grid-view {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+        }
 
         .swipe-container {
             position: relative; width: 100%; overflow: hidden; border-radius: 16px;
@@ -74,11 +105,29 @@
         }
         .swipe-container.back-to-price { background-color: var(--accent-color); }
 
+        /* 圖鑑模式下停用外層滑動背景色 */
+        #gameList.grid-view .swipe-container {
+            background-color: transparent;
+        }
+        /* 圖鑑模式下徹底隱藏滑動按鈕 */
+        #gameList.grid-view .swipe-action-btn {
+            display: none !important;
+        }
+
         .game-row {
             background-color: var(--card-bg); padding: 14px; display: flex; align-items: flex-start;
             box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; position: relative; z-index: 2;
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%;
-            border-radius: 16px; /* 🚀 修正：內部卡片同步加上圓角，完美消滅外層綠色角滲漏 Bug */
+            border-radius: 16px; 
+        }
+
+        /* 🚀 新增：圖鑑模式卡片外觀重組 */
+        #gameList.grid-view .game-row {
+            flex-direction: column;
+            align-items: stretch;
+            padding: 10px;
+            height: 100%;
+            transform: none !important; /* 強制重置手勢位移 */
         }
         
         .swipe-action-btn {
@@ -91,10 +140,42 @@
             width: 75px; height: 95px; border-radius: 10px; overflow: hidden; background: #2c2c2e;
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 16px; 
         }
+
+        /* 🚀 新增：圖鑑模式下「大封面圖片」滿版顯示 */
+        #gameList.grid-view .game-cover-wrapper {
+            width: 100%;
+            height: 140px; /* 控制大封面安全比例 */
+            margin-right: 0;
+            margin-bottom: 8px;
+        }
+
         .game-cover-img { width: 100%; height: 100%; object-fit: cover; }
         .game-cover-placeholder { font-size: 1.8rem; }
+        
         .game-right-info { flex: 1; min-width: 0; }
+        
+        /* 🚀 新增：圖鑑模式下文字資訊模組 */
+        #gameList.grid-view .game-right-info {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            flex-grow: 1;
+        }
+
         .game-row-title { font-size: 1.15rem; font-weight: bold; margin-bottom: 8px; color: #ffffff; }
+
+        /* 圖鑑模式下限縮標題高度，防止文字太長破壞對齊 */
+        #gameList.grid-view .game-row-title {
+            font-size: 0.95rem;
+            margin-bottom: 6px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            height: 2.6rem; 
+        }
 
         .game-row-prices-container { display: flex; flex-direction: column; gap: 6px; }
         .main-price-item {
@@ -154,7 +235,6 @@
         }
         .edit-price-row.active-row { border-color: var(--accent-color); background: #222e3c; }
         
-        /* 🚀 修正：將彈窗內部所有輸入元件提升至最少 16px，完美封鎖 iOS 聚焦時網頁會亂放大嘅 Bug */
         .edit-price-row select { width: 85px; padding: 6px; font-size: 16px; border-radius: 6px; color: white; background: #2c2c2e; border: 1px solid #3a3a3c; }
         .edit-price-row .input-note { flex: 1; padding: 6px; font-size: 16px; border-radius: 6px; min-width: 0; }
         .edit-price-row .input-price { width: 75px; padding: 6px; font-weight: bold; text-align: right; font-size: 16px; border-radius: 6px; background: #1c1c1e; }
@@ -206,6 +286,11 @@
     <div class="segmented-control">
         <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">🔍 格價中</button>
         <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">📦 已買在庫</button>
+    </div>
+
+    <div class="view-toggle-container">
+        <button class="view-btn" id="btnListView" onclick="setViewMode('list')">☰ 列表</button>
+        <button class="view-btn" id="btnGridView" onclick="setViewMode('grid')">🎴 圖鑑</button>
     </div>
 
     <div id="gameList"></div>
@@ -283,16 +368,32 @@
             }
         ];
 
-        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5'));
-        if (!games || !Array.isArray(games)) {
-            games = advancedTestTemplate;
-            localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
-        }
+        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || advancedTestTemplate;
 
         let currentTab = 'price'; 
+        // 🚀 新增：從本地緩存中讀取「檢視模式」，預設為列表模式
+        let currentViewMode = localStorage.getItem('hk_game_view_mode') || 'list'; 
+        
         let currentActivePriceInput = null;
         let touchStartX = 0;
         let activeSwipeContainer = null;
+
+        // 🚀 新增：切換模式控制函數
+        function setViewMode(mode) {
+            currentViewMode = mode;
+            localStorage.setItem('hk_game_view_mode', mode); // 持久化記錄模式
+            
+            document.getElementById('btnListView').classList.toggle('active', mode === 'list');
+            document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
+            
+            const listEl = document.getElementById('gameList');
+            if (mode === 'grid') {
+                listEl.classList.add('grid-view');
+            } else {
+                listEl.classList.remove('grid-view');
+            }
+            renderGames();
+        }
 
         function renderGames() {
             const listEl = document.getElementById('gameList');
@@ -332,27 +433,49 @@
 
                 let pricesHtml = '';
                 if (game.prices && game.prices.length > 0) {
-                    game.prices.forEach((p, pIdx) => {
-                        const condClass = p.condition === '二手' ? 'badge-used' : 'badge-new';
-                        
-                        const isCheapest = (pIdx === minPriceIndex && minPriceValue !== Infinity);
-                        const cheapestRowClass = isCheapest ? 'cheapest-row' : '';
-                        const cheapestNumClass = isCheapest ? 'is-cheapest' : '';
-                        const cheapestBadge = isCheapest ? '🏷️ ' : '';
-
-                        pricesHtml += `
-                            <div class="main-price-item ${cheapestRowClass}">
-                                <div>
+                    // 🚀 核心優化：如果處於「圖鑑模式 (Grid)」，強制只顯示最低價錢，排版更極簡
+                    if (currentViewMode === 'grid') {
+                        if (minPriceIndex !== -1 && minPriceValue !== Infinity) {
+                            const p = game.prices[minPriceIndex];
+                            pricesHtml = `
+                                <div class="main-price-item cheapest-row" style="justify-content: center; margin-top: auto;">
                                     <span class="platform-badge badge-${p.platform}">${p.platform}</span>
-                                    <span class="condition-badge ${condClass}">${p.condition || '一手'}</span>
-                                    <span class="price-source">${p.note || ''}</span>
+                                    <span class="price-num is-cheapest" style="margin-left: 4px;">🏷️$${p.price}</span>
                                 </div>
-                                <span class="price-num ${cheapestNumClass}">${cheapestBadge}$${p.price || '-'}</span>
-                            </div>
-                        `;
-                    });
+                            `;
+                        } else {
+                            // 如果沒填任何數字，預設撈第一組字串兜底
+                            const p = game.prices[0];
+                            pricesHtml = `
+                                <div class="main-price-item" style="justify-content: center; margin-top: auto;">
+                                    <span class="platform-badge badge-${p.platform}">${p.platform}</span>
+                                    <span class="price-num" style="margin-left: 4px;">$${p.price || '-'}</span>
+                                </div>
+                            `;
+                        }
+                    } else {
+                        // 列表模式 (List) 照原樣顯示完整細節
+                        game.prices.forEach((p, pIdx) => {
+                            const condClass = p.condition === '二手' ? 'badge-used' : 'badge-new';
+                            const isCheapest = (pIdx === minPriceIndex && minPriceValue !== Infinity);
+                            const cheapestRowClass = isCheapest ? 'cheapest-row' : '';
+                            const cheapestNumClass = isCheapest ? 'is-cheapest' : '';
+                            const cheapestBadge = isCheapest ? '🏷️ ' : '';
+
+                            pricesHtml += `
+                                <div class="main-price-item ${cheapestRowClass}">
+                                    <div>
+                                        <span class="platform-badge badge-${p.platform}">${p.platform}</span>
+                                        <span class="condition-badge ${condClass}">${p.condition || '一手'}</span>
+                                        <span class="price-source">${p.note || ''}</span>
+                                    </div>
+                                    <span class="price-num ${cheapestNumClass}">${cheapestBadge}$${p.price || '-'}</span>
+                                </div>
+                            `;
+                        });
+                    }
                 } else {
-                    pricesHtml = `<div class="price-source">暫無價格紀錄</div>`;
+                    pricesHtml = `<div class="price-source" style="${currentViewMode === 'grid' ? 'text-align:center;' : ''}">暫無價格紀錄</div>`;
                 }
 
                 const coverHtml = game.cover 
@@ -391,7 +514,7 @@
             document.getElementById('btnTabBought').classList.toggle('active', tab === 'bought');
             document.getElementById('fabBtn').style.display = tab === 'bought' ? 'none' : 'block';
             if (activeSwipeContainer) activeSwipeContainer = null;
-            renderGames();
+            renderGames(); // 重新渲染時 currentViewMode 會被保留
         }
 
         function toggleBoughtStatus(index, status) {
@@ -401,7 +524,9 @@
             renderGames();
         }
 
+        // 🚀 修正：手勢監聽全部在「圖鑑模式」下自動 return 熔斷阻斷，免除誤滑
         function handleTouchStart(e) {
+            if (currentViewMode === 'grid') return;
             if (activeSwipeContainer) {
                 const openRow = activeSwipeContainer.querySelector('.game-row');
                 if (openRow) openRow.style.transform = 'translateX(0px)';
@@ -410,6 +535,7 @@
         }
 
         function handleTouchMove(e, index) {
+            if (currentViewMode === 'grid') return;
             const currentX = e.touches[0].clientX;
             const diffX = touchStartX - currentX;
             const row = document.getElementById(`row_id_${index}`);
@@ -422,6 +548,7 @@
         }
 
         function handleTouchEnd(e, index) {
+            if (currentViewMode === 'grid') return;
             const row = document.getElementById(`row_id_${index}`);
             const container = document.getElementById(`swipe_id_${index}`);
             const currentX = e.changedTouches[0].clientX;
@@ -529,11 +656,14 @@
         }
 
         function openEditModal(index) {
-            const row = document.getElementById(`row_id_${index}`);
-            if (row && row.style.transform !== '' && row.style.transform !== 'translateX(0px)') {
-                row.style.transform = 'translateX(0px)';
-                activeSwipeContainer = null;
-                return;
+            // 🚀 修正：只有在「列表模式」滑動被打開時，才執行中斷彈窗邏輯
+            if (currentViewMode !== 'grid') {
+                const row = document.getElementById(`row_id_${index}`);
+                if (row && row.style.transform !== '' && row.style.transform !== 'translateX(0px)') {
+                    row.style.transform = 'translateX(0px)';
+                    activeSwipeContainer = null;
+                    return;
+                }
             }
 
             const game = games[index];
@@ -598,7 +728,8 @@
             }
         }
 
-        renderGames();
+        // 🚀 初始化設定：頁面第一次開檔，強制執行讀取與佈局對接
+        setViewMode(currentViewMode);
     </script>
 </body>
 </html>
