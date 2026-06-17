@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Game 價紀錄器</title>
+    <title>香港 Game 價紀錄器 (懸浮膠囊穩定版)</title>
     
     <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
@@ -36,7 +36,6 @@
             --color-xbox: #107c10;
             --color-pc: #47bbff;
 
-            /* 🚀 懸浮氣泡底色：深色磨砂玻璃 */
             --bubble-bg: rgba(28, 28, 30, 0.9);
             --bubble-shadow: rgba(0, 0, 0, 0.4);
         }
@@ -53,7 +52,6 @@
             --key-bg: #ffffff;
             --key-active: #e5e5ea;
 
-            /* 🚀 懸浮氣泡底色：淺色磨砂玻璃 */
             --bubble-bg: rgba(255, 255, 255, 0.9);
             --bubble-shadow: rgba(0, 0, 0, 0.1);
         }
@@ -73,7 +71,6 @@
             color: var(--text-color); 
             padding: 20px; 
             padding-top: calc(20px + env(safe-area-inset-top));
-            /* 🚀 修正：縮小底部留白，因為改用懸浮氣泡後空位更省，留出 120px 足夠滾動 */
             padding-bottom: calc(120px + env(safe-area-inset-bottom)); 
             min-height: 100vh;
             display: flex;
@@ -201,7 +198,7 @@
             color: var(--text-color); font-family: monospace; font-size: 16px; padding: 12px; border-radius: 10px; resize: none; outline: none; margin-bottom: 15px;
         }
 
-        /* 🚀 重構【1】：極致現代感嘅左側「懸浮膠囊導航欄 (Bubble Box Nav)」 */
+        /* 左側懸浮膠囊導航欄 (Bubble Box Nav) */
         .segmented-control {
             display: flex; 
             background: var(--bubble-bg);
@@ -211,7 +208,7 @@
             position: fixed; 
             bottom: calc(24px + env(safe-area-inset-bottom)); 
             left: 20px; 
-            /* 寬度自動適配，留出空間給右側 FAB，並限制最大寬度防止橫屏過肥 */
+            width: calc(100快速 - 105px); 
             width: calc(100% - 105px); 
             max-width: 270px; 
             margin-bottom: 0; 
@@ -230,7 +227,7 @@
         .segment-btn.active { background: #3a3a3c; color: #ffffff; }
         body.light-theme .segment-btn.active { background: var(--accent-color); color: #ffffff; }
 
-        /* 🚀 重構【2】：完美移至右下角嘅「圓形大加號浮動按鈕 (Circular FAB)」 */
+        /* 右下角圓形大加號浮動按鈕 (Circular FAB) */
         #fabBtn { 
             position: fixed; 
             bottom: calc(24px + env(safe-area-inset-bottom)); 
@@ -242,7 +239,7 @@
             color: white; 
             border: none; 
             font-size: 1.8rem; 
-            font-weight: normal; /* 讓加號線條更細緻高雅 */
+            font-weight: normal; 
             z-index: 999; 
             box-shadow: 0 12px 30px rgba(0, 122, 255, 0.35); 
             display: flex;
@@ -256,10 +253,17 @@
             transform: scale(0.94);
         }
 
-        /* 表單彈窗與鍵盤 */
+        /* 表單彈窗與鍵盤定位修正 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: flex-end; z-index: 1000; }
-        .modal-content { background-color: var(--card-bg); width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: slideUp 0.25s ease-out; max-height: 92vh; display: flex; flex-direction: column; }
+        .modal-content { 
+            background-color: var(--card-bg); width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; 
+            padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
+            animation: slideUp 0.25s ease-out; max-height: 92vh; display: flex; flex-direction: column; 
+            position: relative; /* 🚀 修正：設為絕對定位基準 */
+        }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        /* 內頁主容器 */
         .modal-body { overflow-y: auto; flex: 1; padding-bottom: 30px; scroll-behavior: smooth; }
 
         .form-group { margin-bottom: 12px; }
@@ -282,19 +286,22 @@
         .btn-add-price-row { background: var(--input-bg); color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; margin-bottom: 15px; }
         .btn-main-submit { background-color: var(--success-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(52,199,89,0.3); margin-top: 10px; }
 
-        /* 確保鍵盤固定在最底，且不受 body 內容溢出影響 */
-.custom-keyboard { 
-    position: fixed; /* 改為 fixed */
-    bottom: 0; 
-    left: 0; 
-    width: 100%; 
-    background: var(--keyboard-bg); 
-    padding: 15px; 
-    padding-bottom: env(safe-area-inset-bottom); 
-    display: none; 
-    z-index: 1200; /* 確保它在所有層級之上 */
-    border-top: 1px solid var(--input-border);
-}
+        /* 🚀 終極修正：自訂觸控鍵盤排版與絕對定位鎖定 */
+        .custom-keyboard { 
+            background: var(--keyboard-bg); 
+            padding: 15px; 
+            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
+            display: none; 
+            grid-template-columns: repeat(3, 1fr) 1.2fr; 
+            gap: 10px; 
+            border-top: 1px solid var(--input-border); 
+            z-index: 1100; 
+            position: absolute; /* 改為絕對定位，死死鎖定在彈窗最底端 */
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-radius: 0 0 24px 24px;
+        }
         .key { background: var(--key-bg); color: var(--text-color); border: none; border-radius: 10px; padding: 12px 0; font-size: 1.3rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .key:active { background: var(--key-active); }
         .key.action-key { background: #48484a; color: white; font-size: 1rem; }
@@ -305,7 +312,7 @@
         .form-btns-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-text { background: none; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
         .empty-tips { text-align: center; color: var(--text-muted); margin-top: 60px; font-size: 0.9rem; }
-         cruelty-free-form { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+        #gameForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -367,10 +374,10 @@
         </div>
     </div>
 
-    <!-- 🚀 已完美移至右下角、零阻擋嘅圓形大加號浮動按鈕 -->
+    <!-- 圓形大加號浮動按鈕 -->
     <button id="fabBtn" onclick="openAddModal()">＋</button>
 
-    <!-- 🚀 已完美改造、左側獨立懸浮嘅 iOS 膠囊導航欄 (Bubble Box) -->
+    <!-- iOS 膠囊導航欄 (Bubble Box) -->
     <div class="segmented-control">
         <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">格價</button>
         <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">已買</button>
@@ -408,30 +415,31 @@
                         <div id="dynamicPriceArea"></div>
                         <button type="button" class="btn-add-price-row" onclick="addPriceRowWithScroll('switch', '一手', '', '')">＋ 新增價格欄位</button>
                     </div>
-
-                    <button type="button" class="btn-main-submit" onclick="handleFormSubmit()">💾 儲存所有修改</button>
                 </div>
             </form>
 
-            <!-- 專用自訂數字觸控鍵盤 -->
+            <!-- 🚀 終極修正：完美填滿、無空隙對稱網格數字觸控鍵盤 -->
             <div class="custom-keyboard" id="customKeyboard">
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '1')">1</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '2')">2</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '3')">3</button>
-                <button type="button" class="key action-key delete-key" ontouchstart="handleKeyPress(event, 'BACK')">⌫</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '1')">1</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '2')">2</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '3')">3</button>
+                <button type="button" class="key action-key delete-key" onclick="handleKeyPress(event, 'BACK')">⌫</button>
                 
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '4')">4</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '5')">5</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '6')">6</button>
-                <button type="button" class="key action-key done-key" ontouchstart="handleKeyDone(event)">完成<br>🔽</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '4')">4</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '5')">5</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '6')">6</button>
+                <button type="button" class="key action-key done-key" onclick="handleKeyDone(event)">完成<br>🔽</button>
                 
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '7')">7</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '8')">8</button>
-                <button type="button" class="key" ontouchstart="handleKeyPress(event, '9')">9</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '7')">7</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '8')">8</button>
+                <button type="button" class="key" onclick="handleKeyPress(event, '9')">9</button>
                 
-                <button type="button" class="key action-key" ontouchstart="handleKeyPress(event, 'CLEAR')">Clear</button>
-                <button type="button" class="key" style="grid-column: span 2;" ontouchstart="handleKeyPress(event, '0')">0</button>
+                <button type="button" class="key" style="grid-column: span 3;" onclick="handleKeyPress(event, '0')">0</button>
+                <button type="button" class="key action-key" onclick="handleKeyPress(event, 'CLEAR')">Clear</button>
             </div>
+            
+            <!-- 獨立外部大提交按鈕 -->
+            <button type="button" class="btn-main-submit" style="position: absolute; bottom: 20px; width: calc(100% - 40px); left: 20px; z-index: 1050;" id="btnMainSubmit" onclick="handleFormSubmit()">💾 儲存所有修改</button>
         </div>
     </div>
 
@@ -641,7 +649,7 @@
                 searchContainerEl.style.display = 'block'; 
                 gameListEl.style.display = (currentViewMode === 'grid') ? 'grid' : 'flex';
                 viewToggleEl.style.display = 'flex';
-                fabBtnEl.style.display = (tab === 'bought') ? 'none' : 'flex'; // 🚀 FAB 預設改用 flex 完美居中 + 號
+                fabBtnEl.style.display = (tab === 'bought') ? 'none' : 'flex'; 
                 if (activeSwipeContainer) activeSwipeContainer = null;
                 renderGames();
             }
@@ -751,7 +759,6 @@
             googleLnk.href = `https://www.google.com/search?q=${encodeURIComponent(fullName + " 香港 價錢")}`;
         }
 
-        // 動態注入一列價格
         function addPriceRow(platform = 'switch', condition = '一手', note = '', price = '') {
             const area = document.getElementById('dynamicPriceArea');
             const rowId = 'p_row_' + Date.now() + Math.random().toString(36).substr(2, 5);
@@ -777,24 +784,15 @@
             return { inputPrice: rowDiv.querySelector('.input-price'), id: rowId };
         }
 
-function addPriceRowWithScroll(platform, condition, note, price) {
-    const rowInfo = addPriceRow(platform, condition, note, price);
-    
-    // 延遲執行確保 DOM 已經渲染完畢
-    setTimeout(() => {
-        const rowElement = document.getElementById(rowInfo.id);
-        
-        // 使用 scrollIntoView 讓該欄位捲動到 Modal 容器內可視範圍
-        // block: "nearest" 會在該元素剛好超出視角時自動捲動
-        rowElement.scrollIntoView({ 
-            behavior: 'smooth', 
-            block: 'nearest' 
-        });
-        
-        // 觸發鍵盤顯示
-        activatePriceKeyboard(rowInfo.inputPrice, rowInfo.id);
-    }, 100);
-}
+        // 🚀 修正：優化新增與捲動對齊，撐大底部間距，防止鍵盤蓋住輸入格
+        function addPriceRowWithScroll(platform, condition, note, price) {
+            const rowInfo = addPriceRow(platform, condition, note, price);
+            setTimeout(() => {
+                document.getElementById('modalBody').style.paddingBottom = '280px';
+                document.getElementById(rowInfo.id).scrollIntoView({ behavior: 'smooth', block: 'center' });
+                activatePriceKeyboard(rowInfo.inputPrice, rowInfo.id);
+            }, 100);
+        }
 
         function toggleCondition(btn) {
             if (btn.innerText === '一手') {
@@ -804,18 +802,31 @@ function addPriceRowWithScroll(platform, condition, note, price) {
             }
         }
 
+        // 🚀 修正：智能為內頁加上動態留白，將正在輸入嘅格仔流暢捲動去中間
         function activatePriceKeyboard(inputEl, rowId) {
             document.querySelectorAll('.edit-price-row').forEach(el => el.classList.remove('active-row'));
             currentActivePriceInput = inputEl;
             document.getElementById(rowId).classList.add('active-row');
+            
+            // 隱藏儲存按鈕，防止鍵盤與大 submit 按鈕重疊
+            document.getElementById('btnMainSubmit').style.display = 'none';
             document.getElementById('customKeyboard').style.display = 'grid'; 
+            
+            document.getElementById('modalBody').style.paddingBottom = '280px';
             document.activeElement.blur();
+            
+            setTimeout(() => {
+                document.getElementById(rowId).scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }, 80);
         }
 
+        // 🚀 修正：關閉鍵盤時還原大按鈕與內頁間距
         function hideCustomKeyboard() {
             document.getElementById('customKeyboard').style.display = 'none'; 
+            document.getElementById('btnMainSubmit').style.display = 'block'; // 恢復儲存按鈕
             document.querySelectorAll('.edit-price-row').forEach(el => el.classList.remove('active-row'));
             currentActivePriceInput = null;
+            document.getElementById('modalBody').style.paddingBottom = '30px';
         }
 
         function handleKeyPress(e, key) {
