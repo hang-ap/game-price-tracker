@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (懸浮膠囊版)</title>
+    <title>Game 價紀錄器</title>
     
     <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
@@ -282,7 +282,19 @@
         .btn-add-price-row { background: var(--input-bg); color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; margin-bottom: 15px; }
         .btn-main-submit { background-color: var(--success-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(52,199,89,0.3); margin-top: 10px; }
 
-        .custom-keyboard { background: var(--keyboard-bg); margin: 10px -20px -20px -20px; padding: 15px; padding-bottom: calc(15px + env(safe-area-inset-bottom)); display: grid; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 10px; border-top: 1px solid var(--input-border); display: none; z-index: 1100; }
+        /* 確保鍵盤固定在最底，且不受 body 內容溢出影響 */
+.custom-keyboard { 
+    position: fixed; /* 改為 fixed */
+    bottom: 0; 
+    left: 0; 
+    width: 100%; 
+    background: var(--keyboard-bg); 
+    padding: 15px; 
+    padding-bottom: env(safe-area-inset-bottom); 
+    display: none; 
+    z-index: 1200; /* 確保它在所有層級之上 */
+    border-top: 1px solid var(--input-border);
+}
         .key { background: var(--key-bg); color: var(--text-color); border: none; border-radius: 10px; padding: 12px 0; font-size: 1.3rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .key:active { background: var(--key-active); }
         .key.action-key { background: #48484a; color: white; font-size: 1rem; }
@@ -765,14 +777,24 @@
             return { inputPrice: rowDiv.querySelector('.input-price'), id: rowId };
         }
 
-        function addPriceRowWithScroll(platform, condition, note, price) {
-            const rowInfo = addPriceRow(platform, condition, note, price);
-            setTimeout(() => {
-                const bodyEl = document.getElementById('modalBody');
-                bodyEl.scrollTop = bodyEl.scrollHeight;
-                activatePriceKeyboard(rowInfo.inputPrice, rowInfo.id);
-            }, 80);
-        }
+function addPriceRowWithScroll(platform, condition, note, price) {
+    const rowInfo = addPriceRow(platform, condition, note, price);
+    
+    // 延遲執行確保 DOM 已經渲染完畢
+    setTimeout(() => {
+        const rowElement = document.getElementById(rowInfo.id);
+        
+        // 使用 scrollIntoView 讓該欄位捲動到 Modal 容器內可視範圍
+        // block: "nearest" 會在該元素剛好超出視角時自動捲動
+        rowElement.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'nearest' 
+        });
+        
+        // 觸發鍵盤顯示
+        activatePriceKeyboard(rowInfo.inputPrice, rowInfo.id);
+    }, 100);
+}
 
         function toggleCondition(btn) {
             if (btn.innerText === '一手') {
