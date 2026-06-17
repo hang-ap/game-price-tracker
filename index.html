@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (終極穩定版)</title>
+    <title>香港 Game 價紀錄器 (懸浮膠囊版)</title>
     
     <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
@@ -35,6 +35,10 @@
             --color-ps4: #2e6db4;
             --color-xbox: #107c10;
             --color-pc: #47bbff;
+
+            /* 🚀 懸浮氣泡底色：深色磨砂玻璃 */
+            --bubble-bg: rgba(28, 28, 30, 0.9);
+            --bubble-shadow: rgba(0, 0, 0, 0.4);
         }
 
         body.light-theme {
@@ -48,6 +52,10 @@
             --keyboard-bg: #d1d3d9;
             --key-bg: #ffffff;
             --key-active: #e5e5ea;
+
+            /* 🚀 懸浮氣泡底色：淺色磨砂玻璃 */
+            --bubble-bg: rgba(255, 255, 255, 0.9);
+            --bubble-shadow: rgba(0, 0, 0, 0.1);
         }
 
         * {
@@ -60,14 +68,13 @@
             touch-action: manipulation;
         }
 
-        /* 🚀 終極佈局修正：採用彈性 Column 佈局並限制最少 100vh 滿版 */
         body { 
             background-color: var(--bg-color); 
             color: var(--text-color); 
             padding: 20px; 
             padding-top: calc(20px + env(safe-area-inset-top));
-            /* 預留足夠底部空間給浮動 FAB 與固定 Tab Bar */
-            padding-bottom: calc(180px + env(safe-area-inset-bottom)); 
+            /* 🚀 修正：縮小底部留白，因為改用懸浮氣泡後空位更省，留出 120px 足夠滾動 */
+            padding-bottom: calc(120px + env(safe-area-inset-bottom)); 
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -104,7 +111,7 @@
             border-radius: 12px; color: var(--text-color); font-size: 0.95rem; outline: none;
         }
 
-        /* 檢視切換欄 */
+        /* 檢視模式切換 */
         .view-toggle-container { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 16px; flex-shrink: 0; }
         .view-btn {
             background: #1c1c1e; border: none; color: var(--text-muted); padding: 6px 12px; font-size: 0.8rem;
@@ -113,13 +120,11 @@
         body.light-theme .view-btn { background: #e3e3e6; }
         .view-btn.active { background: var(--accent-color); color: #ffffff; }
 
-        /* 🚀 列表名單容器：允許自動向下增長，但絕不垂直拉伸子卡片 */
+        /* 清單容器 */
         #gameList { 
             display: flex; flex-direction: column; gap: 14px; 
             flex-grow: 1; align-content: start; 
         }
-        
-        /* 🚀 圖鑑模式核心修正：加入 align-content 與 max-content，徹底解決 1-2 隻 Game 被無限拉高拉肥嘅 Bug */
         #gameList.grid-view { 
             display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; 
             grid-auto-rows: max-content; align-content: start; 
@@ -132,7 +137,7 @@
 
         .game-row {
             background-color: var(--card-bg); padding: 14px; display: flex; align-items: flex-start;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; position: relative; z-index: 2;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; position: relative; z-index: 2;
             transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; border-radius: 16px; 
         }
         #gameList.grid-view .game-row { flex-direction: column; align-items: stretch; padding: 10px; height: 100%; transform: none !important; }
@@ -179,7 +184,7 @@
         body.light-theme .price-num { color: #d97706; }
         .price-num.is-cheapest { color: var(--success-color); font-weight: 800; }
 
-        /* 🚀 全新獨立設定頁面：一樣加入 flex-grow 與 start 對齊，確保畫面向頂部靠攏，絕不穿崩 */
+        /* 全獨立系統設定頁面 */
         #settingsPage { 
             display: none; flex-direction: column; gap: 20px; 
             flex-grow: 1; justify-content: flex-start; 
@@ -196,22 +201,59 @@
             color: var(--text-color); font-family: monospace; font-size: 16px; padding: 12px; border-radius: 10px; resize: none; outline: none; margin-bottom: 15px;
         }
 
-        /* 🚀 底部固定導航欄 (iOS Tab Bar Style) */
+        /* 🚀 重構【1】：極致現代感嘅左側「懸浮膠囊導航欄 (Bubble Box Nav)」 */
         .segmented-control {
-            display: flex; background: #1c1c1e; padding: 6px 14px calc(6px + env(safe-area-inset-bottom)) 14px;
-            border-top: 1px solid var(--input-border); position: fixed; bottom: 0; left: 0; width: 100%; margin-bottom: 0; z-index: 998;
-            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
+            display: flex; 
+            background: var(--bubble-bg);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            padding: 5px; 
+            position: fixed; 
+            bottom: calc(24px + env(safe-area-inset-bottom)); 
+            left: 20px; 
+            /* 寬度自動適配，留出空間給右側 FAB，並限制最大寬度防止橫屏過肥 */
+            width: calc(100% - 105px); 
+            max-width: 270px; 
+            margin-bottom: 0; 
+            z-index: 998;
+            border-radius: 30px;
+            box-shadow: 0 12px 30px var(--bubble-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        body.light-theme .segmented-control { background: #f2f2f7; border-top: 1px solid #d1d1d6; }
-        .segment-btn { flex: 1; background: none; border: none; color: var(--text-muted); padding: 10px 0; font-size: 0.9rem; font-weight: 600; border-radius: 8px; cursor: pointer; }
+        body.light-theme .segmented-control {
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        .segment-btn { 
+            flex: 1; background: none; border: none; color: var(--text-muted); padding: 12px 0; 
+            font-size: 0.88rem; font-weight: 600; border-radius: 25px; cursor: pointer; transition: all 0.25s ease;
+        }
         .segment-btn.active { background: #3a3a3c; color: #ffffff; }
-        body.light-theme .segment-btn.active { background: #ffffff; color: #000000; box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+        body.light-theme .segment-btn.active { background: var(--accent-color); color: #ffffff; }
 
-        /* 浮動新增按鈕 (完美定位於導航欄上方) */
+        /* 🚀 重構【2】：完美移至右下角嘅「圓形大加號浮動按鈕 (Circular FAB)」 */
         #fabBtn { 
-            position: fixed; bottom: calc(70px + env(safe-area-inset-bottom)); left: 50%; transform: translateX(-50%); 
-            background-color: var(--accent-color); color: white; padding: 14px 28px; border-radius: 30px; font-weight: bold;
-            box-shadow: 0 4px 12px rgba(0,122,255,0.4); border: none; font-size: 1rem; z-index: 999; 
+            position: fixed; 
+            bottom: calc(24px + env(safe-area-inset-bottom)); 
+            right: 20px; 
+            width: 58px; 
+            height: 58px; 
+            border-radius: 50%; 
+            background-color: var(--accent-color); 
+            color: white; 
+            border: none; 
+            font-size: 1.8rem; 
+            font-weight: normal; /* 讓加號線條更細緻高雅 */
+            z-index: 999; 
+            box-shadow: 0 12px 30px rgba(0, 122, 255, 0.35); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            left: auto;
+            transform: none;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+        #fabBtn:active {
+            transform: scale(0.94);
         }
 
         /* 表單彈窗與鍵盤 */
@@ -251,7 +293,7 @@
         .form-btns-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-text { background: none; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
         .empty-tips { text-align: center; color: var(--text-muted); margin-top: 60px; font-size: 0.9rem; }
-        #gameForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+         cruelty-free-form { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
     </style>
 </head>
 <body>
@@ -267,7 +309,6 @@
     </div>
     
     <script>
-        // 預先阻斷白光閃爍
         const initialTheme = localStorage.getItem('hk_game_theme') || 'dark';
         if (initialTheme === 'light') { document.body.classList.add('light-theme'); }
     </script>
@@ -314,14 +355,14 @@
         </div>
     </div>
 
-    <!-- 浮動新增按鈕 -->
-    <button id="fabBtn" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
+    <!-- 🚀 已完美移至右下角、零阻擋嘅圓形大加號浮動按鈕 -->
+    <button id="fabBtn" onclick="openAddModal()">＋</button>
 
-    <!-- 固定於最底部的 iOS 導航欄 (Tab Bar) -->
+    <!-- 🚀 已完美改造、左側獨立懸浮嘅 iOS 膠囊導航欄 (Bubble Box) -->
     <div class="segmented-control">
-        <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">🔍 格價中</button>
-        <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">📦 已買在庫</button>
-        <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">⚙️ 系統設定</button>
+        <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">格價</button>
+        <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">已買</button>
+        <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">設定</button>
     </div>
 
     <!-- 遊戲詳細編輯視窗 -->
@@ -588,7 +629,7 @@
                 searchContainerEl.style.display = 'block'; 
                 gameListEl.style.display = (currentViewMode === 'grid') ? 'grid' : 'flex';
                 viewToggleEl.style.display = 'flex';
-                fabBtnEl.style.display = (tab === 'bought') ? 'none' : 'block';
+                fabBtnEl.style.display = (tab === 'bought') ? 'none' : 'flex'; // 🚀 FAB 預設改用 flex 完美居中 + 號
                 if (activeSwipeContainer) activeSwipeContainer = null;
                 renderGames();
             }
@@ -651,7 +692,6 @@
             document.getElementById('backupModal').style.display = 'flex';
         }
 
-        // 開啟還原彈窗
         function openRestoreModal() {
             document.getElementById('backupModalTitle').innerText = "匯入備份數據還原";
             const textarea = document.getElementById('backupTextarea');
@@ -699,6 +739,7 @@
             googleLnk.href = `https://www.google.com/search?q=${encodeURIComponent(fullName + " 香港 價錢")}`;
         }
 
+        // 動態注入一列價格
         function addPriceRow(platform = 'switch', condition = '一手', note = '', price = '') {
             const area = document.getElementById('dynamicPriceArea');
             const rowId = 'p_row_' + Date.now() + Math.random().toString(36).substr(2, 5);
@@ -854,7 +895,6 @@
             }
         }
 
-        // 智慧延時關閉 Splash 畫面
         window.addEventListener('load', () => {
             setTimeout(() => {
                 const loader = document.getElementById('loadingOverlay');
