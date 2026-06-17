@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (穩定修正版)</title>
+    <title>香港 Game 價紀錄器 (終極流暢版)</title>
     
     <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
@@ -65,53 +65,65 @@
             color: var(--text-color); 
             padding: 20px; 
             padding-top: calc(20px + env(safe-area-inset-top));
-            padding-bottom: 100px; 
+            /* 🚀 修正：加大底部留白，確保內容唔會被固定喺最底嘅導航欄同新增掣遮住 */
+            padding-bottom: 180px; 
             overflow-x: hidden; 
             transition: background-color 0.3s, color 0.3s;
         }
         header { margin-bottom: 15px; text-align: center; }
         header h1 { font-size: 1.4rem; font-weight: 600; }
 
-        /* 🚀 新增：全螢幕 Loading 畫面樣式 */
-        #loadingOverlay {
-            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-            background-color: var(--bg-color); z-index: 9999;
-            display: flex; flex-direction: column; justify-content: center; align-items: center;
-            transition: opacity 0.3s ease, visibility 0.3s;
+        /* 🚀 新增：搜尋欄 (Search Bar) 樣式 */
+        .search-container {
+            margin-bottom: 14px;
+            width: 100%;
         }
-        .loading-text {
-            font-size: 1.05rem; font-weight: 600; color: var(--text-color); margin-bottom: 18px; letter-spacing: 0.5px;
+        .search-container input {
+            width: 100%;
+            padding: 12px 14px;
+            background: var(--card-bg);
+            border: 1px solid var(--input-border);
+            border-radius: 12px;
+            color: var(--text-color);
+            font-size: 0.95rem;
+            outline: none;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            transition: border-color 0.2s;
         }
-        /* 🚀 新增：3點跳跳點 (Bouncing Dots) 動態特效 */
-        .loading-dots { display: flex; gap: 6px; }
-        .loading-dot {
-            width: 10px; height: 10px; background-color: var(--accent-color); border-radius: 50%;
-            animation: dotBounce 1.4s infinite ease-in-out both;
-        }
-        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
-        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
-        @keyframes dotBounce {
-            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
-            40% { transform: scale(1); opacity: 1; }
+        .search-container input:focus {
+            border-color: var(--accent-color);
         }
 
+        /* 🚀 重構：將原本喺頂部嘅「格價中」呢組野，改造成固定喺最底嘅 iOS Tab Bar */
         .segmented-control {
-            display: flex; background: #1c1c1e; padding: 2px; border-radius: 9px; margin-bottom: 20px;
+            display: flex;
+            background: #1c1c1e;
+            padding: 6px 14px calc(6px + env(safe-area-inset-bottom)) 14px;
+            border-top: 1px solid var(--input-border);
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            border-radius: 0;
+            margin-bottom: 0;
+            z-index: 998;
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.15);
         }
-        body.light-theme .segmented-control { background: #e3e3e6; }
+        body.light-theme .segmented-control {
+            background: #f2f2f7;
+            border-top: 1px solid #d1d1d6;
+        }
         .segment-btn {
             flex: 1; background: none; border: none; color: var(--text-muted);
-            padding: 8px 0; font-size: 0.9rem; font-weight: 600; border-radius: 7px;
+            padding: 10px 0; font-size: 0.9rem; font-weight: 600; border-radius: 8px;
             cursor: pointer; transition: all 0.2s;
         }
         .segment-btn.active {
-            background: #3a3a3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            background: #3a3a3c; color: #ffffff;
         }
-        body.light-theme .segment-btn.active { background: #ffffff; color: #000000; }
-
-        /* 恢復上一版完美清單樣式 */
-        #gameList { display: flex; flex-direction: column; gap: 14px; }
-        #gameList.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        body.light-theme .segment-btn.active {
+            background: #ffffff; color: #000000; box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+        }
 
         .view-toggle-container { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 16px; }
         .view-btn {
@@ -121,6 +133,9 @@
         }
         body.light-theme .view-btn { background: #e3e3e6; }
         .view-btn.active { background: var(--accent-color); color: #ffffff; }
+
+        #gameList { display: flex; flex-direction: column; gap: 14px; }
+        #gameList.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
         .swipe-container {
             position: relative; width: 100%; overflow: hidden; border-radius: 16px;
@@ -251,8 +266,11 @@
         #btnDelete { visibility: hidden; }
         #gameForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
         
+        /* 🚀 重構：新增按鈕浮動定位喺最底 Tab Bar 嘅上方，形成層次感 */
         #fabBtn { 
-            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); 
+            position: fixed; 
+            bottom: calc(65px + env(safe-area-inset-bottom)); /* 完美避開底部導航欄 */
+            left: 50%; transform: translateX(-50%); 
             background-color: var(--accent-color); color: white; padding: 14px 28px; 
             border-radius: 30px; font-weight: bold; box-shadow: 0 4px 12px rgba(0,122,255,0.4); 
             border: none; font-size: 1rem; z-index: 999; 
@@ -261,26 +279,13 @@
 </head>
 <body>
 
-    <!-- 🚀 新增：全螢幕智慧 Loading 轉場畫面 -->
-    <div id="loadingOverlay">
-        <div class="loading-text">正在載入香港 Game 價紀錄</div>
-        <div class="loading-dots">
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
-            <div class="loading-dot"></div>
-        </div>
-    </div>
-    
-    <!-- 🚀 新增：在 HTML 最前方預先執行主題渲染，防止閃白光 -->
-    <script>
-        const initialTheme = localStorage.getItem('hk_game_theme') || 'dark';
-        if (initialTheme === 'light') { document.body.classList.add('light-theme'); }
-    </script>
+    <header>
+        <h1>🎮 香港 Game 價紀錄</h1>
+    </header>
 
-    <div class="segmented-control">
-        <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">🔍 格價中</button>
-        <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">📦 已買在庫</button>
-        <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">⚙️ 系統設定</button>
+    <!-- 🚀 新增：頂部搜尋欄組件 (Search Bar) -->
+    <div class="search-container" id="searchContainer">
+        <input type="text" id="searchBar" placeholder="🔍 搜尋遊戲名稱..." oninput="renderGames()">
     </div>
 
     <!-- 檢視切換欄 -->
@@ -315,9 +320,17 @@
         </div>
     </div>
 
+    <!-- 固定於導航欄上方嘅新增按鈕 -->
     <button id="fabBtn" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
 
-    <!-- 遊戲彈窗 -->
+    <!-- 🚀 已調到最底部嘅三段功能切換導航欄 (The Group) -->
+    <div class="segmented-control">
+        <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">🔍 格價中</button>
+        <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">📦 已買在庫</button>
+        <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">⚙️ 系統設定</button>
+    </div>
+
+    <!-- 遊戲編輯彈窗 -->
     <div id="gameModal" class="modal">
         <div class="modal-content">
             <div class="form-btns-top">
@@ -398,17 +411,12 @@
                 isBought: false,
                 prices: [
                     { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" },
-                    { platform: "ps5", condition: "一手", note: "信和地庫", price: "399" },
-                    { platform: "ps5", condition: "一手", note: "PS Store 數碼", price: "568" }
+                    { platform: "ps5", condition: "一手", note: "信和地庫", price: "399" }
                 ]
             }
         ];
 
-        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5'));
-        if (!games || !Array.isArray(games)) {
-            games = advancedTestTemplate;
-            localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
-        }
+        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || advancedTestTemplate;
 
         let currentTab = 'price'; 
         let currentViewMode = localStorage.getItem('hk_game_view_mode') || 'list'; 
@@ -439,6 +447,7 @@
         function setViewMode(mode) {
             currentViewMode = mode;
             localStorage.setItem('hk_game_view_mode', mode); 
+            
             document.getElementById('btnListView').classList.toggle('active', mode === 'list');
             document.getElementById('btnGridView').classList.toggle('active', mode === 'grid');
             
@@ -456,9 +465,15 @@
             listEl.innerHTML = '';
             let hasVisibleGame = false;
 
+            // 🚀 讀取搜尋關鍵字
+            const searchKeyword = document.getElementById('searchBar').value.toLowerCase().trim();
+
             games.forEach((game, realIndex) => {
                 if (currentTab === 'bought' && !game.isBought) return;
                 if (currentTab === 'price' && game.isBought) return;
+
+                // 🚀 關鍵字過濾：如果填咗字但 Game 名對唔上，就跳過
+                if (searchKeyword && !game.name.toLowerCase().includes(searchKeyword)) return;
 
                 hasVisibleGame = true;
 
@@ -553,7 +568,12 @@
 
             if (!hasVisibleGame) {
                 tipsEl.style.display = 'block';
-                tipsEl.innerText = currentTab === 'bought' ? '收藏庫空空如也，向左拉格價中嘅 Game 移入嚟啦！' : '清單無紀錄，撳下面加第一隻 Game！';
+                // 🚀 如果係搜尋搵唔到，彈對應提示
+                if (searchKeyword) {
+                    tipsEl.innerText = '❌ 搵唔到符合搜尋關鍵字嘅遊戲紀錄。';
+                } else {
+                    tipsEl.innerText = currentTab === 'bought' ? '收藏庫空空如也，向左拉格價中嘅 Game 移入嚟啦！' : '清單無紀錄，撳下面加第一隻 Game！';
+                }
             } else {
                 tipsEl.style.display = 'none';
             }
@@ -561,6 +581,7 @@
 
         function switchTab(tab) {
             currentTab = tab;
+            
             document.getElementById('btnTabPrice').classList.toggle('active', tab === 'price');
             document.getElementById('btnTabBought').classList.toggle('active', tab === 'bought');
             document.getElementById('btnTabSettings').classList.toggle('active', tab === 'settings');
@@ -570,15 +591,18 @@
             const settingsPageEl = document.getElementById('settingsPage');
             const tipsEl = document.getElementById('emptyTips');
             const fabBtnEl = document.getElementById('fabBtn');
+            const searchContainerEl = document.getElementById('searchContainer');
 
             if (tab === 'settings') {
                 gameListEl.style.display = 'none';
                 viewToggleEl.style.display = 'none';
+                searchContainerEl.style.display = 'none'; // 設定頁隱藏搜尋欄
                 tipsEl.style.display = 'none';
                 fabBtnEl.style.display = 'none';
                 settingsPageEl.style.display = 'flex';
             } else {
                 settingsPageEl.style.display = 'none';
+                searchContainerEl.style.display = 'block'; // 主分頁顯示搜尋欄
                 gameListEl.style.display = (currentViewMode === 'grid') ? 'grid' : 'flex';
                 viewToggleEl.style.display = 'flex';
                 fabBtnEl.style.display = (tab === 'bought') ? 'none' : 'block';
@@ -833,6 +857,9 @@
             }
 
             localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
+            
+            // 🚀 儲存後自動清空搜尋欄，等玩家睇到最新名單
+            document.getElementById('searchBar').value = '';
             switchTab(currentTab); 
             closeModal();
         }
@@ -846,17 +873,6 @@
                 closeModal();
             }
         }
-
-        // 🚀 智慧延時淡出：當網頁資源準備好後，給予 600ms 短暫展示動態 Loading，然後絲滑淡出
-        window.addEventListener('load', () => {
-            setTimeout(() => {
-                const loader = document.getElementById('loadingOverlay');
-                loader.style.opacity = '0';
-                setTimeout(() => {
-                    loader.style.visibility = 'hidden';
-                }, 300);
-            }, 600);
-        });
 
         initTheme();
         setViewMode(currentViewMode);
