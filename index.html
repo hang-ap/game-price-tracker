@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (Wallet 疊卡特效版)</title>
+    <title>香港 Game 價紀錄器 (穩定修正版)</title>
     
+    <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -19,7 +20,7 @@
             --input-border: #3a3a3c;
             --text-color: #ffffff;
             --text-muted: #aaaaaa;
-            --item-row-bg: rgba(255, 255, 255, 0.05);
+            --item-row-bg: rgba(255, 255, 255, 0.03);
             --keyboard-bg: #2c2c2e;
             --key-bg: #3a3a3c;
             --key-active: #555557;
@@ -34,14 +35,6 @@
             --color-ps4: #2e6db4;
             --color-xbox: #107c10;
             --color-pc: #47bbff;
-
-            /* 🚀 卡帶專屬漸變色組合 */
-            --gradient-default: linear-gradient(135deg, #2c2c2e, #1c1c1e);
-            --gradient-switch: linear-gradient(135deg, #e60012, #8b000b);
-            --gradient-ps5: linear-gradient(135deg, #00439c, #001c42);
-            --gradient-ps4: linear-gradient(135deg, #2e6db4, #143d6b);
-            --gradient-xbox: linear-gradient(135deg, #107c10, #063c06);
-            --gradient-pc: linear-gradient(135deg, #1f94e5, #0b4e7c);
         }
 
         body.light-theme {
@@ -55,7 +48,6 @@
             --keyboard-bg: #d1d3d9;
             --key-bg: #ffffff;
             --key-active: #e5e5ea;
-            --gradient-default: linear-gradient(135deg, #ffffff, #e5e5ea);
         }
 
         * {
@@ -73,15 +65,38 @@
             color: var(--text-color); 
             padding: 20px; 
             padding-top: calc(20px + env(safe-area-inset-top));
-            padding-bottom: 140px; 
-            overflow-x: hidden;
+            padding-bottom: 100px; 
+            overflow-x: hidden; 
             transition: background-color 0.3s, color 0.3s;
         }
         header { margin-bottom: 15px; text-align: center; }
         header h1 { font-size: 1.4rem; font-weight: 600; }
 
+        /* 🚀 新增：全螢幕 Loading 畫面樣式 */
+        #loadingOverlay {
+            position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+            background-color: var(--bg-color); z-index: 9999;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            transition: opacity 0.3s ease, visibility 0.3s;
+        }
+        .loading-text {
+            font-size: 1.05rem; font-weight: 600; color: var(--text-color); margin-bottom: 18px; letter-spacing: 0.5px;
+        }
+        /* 🚀 新增：3點跳跳點 (Bouncing Dots) 動態特效 */
+        .loading-dots { display: flex; gap: 6px; }
+        .loading-dot {
+            width: 10px; height: 10px; background-color: var(--accent-color); border-radius: 50%;
+            animation: dotBounce 1.4s infinite ease-in-out both;
+        }
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+        @keyframes dotBounce {
+            0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+            40% { transform: scale(1); opacity: 1; }
+        }
+
         .segmented-control {
-            display: flex; background: #1c1c1e; padding: 2px; border-radius: 9px; margin-bottom: 12px;
+            display: flex; background: #1c1c1e; padding: 2px; border-radius: 9px; margin-bottom: 20px;
         }
         body.light-theme .segmented-control { background: #e3e3e6; }
         .segment-btn {
@@ -89,68 +104,39 @@
             padding: 8px 0; font-size: 0.9rem; font-weight: 600; border-radius: 7px;
             cursor: pointer; transition: all 0.2s;
         }
-        .segment-btn.active { background: #3a3a3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        .segment-btn.active {
+            background: #3a3a3c; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
         body.light-theme .segment-btn.active { background: #ffffff; color: #000000; }
+
+        /* 恢復上一版完美清單樣式 */
+        #gameList { display: flex; flex-direction: column; gap: 14px; }
+        #gameList.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
 
         .view-toggle-container { display: flex; justify-content: flex-end; gap: 6px; margin-bottom: 16px; }
         .view-btn {
-            background: #1c1c1e; border: none; color: var(--text-muted); padding: 6px 12px; font-size: 0.8rem;
-            font-weight: 600; border-radius: 6px; cursor: pointer; transition: background 0.2s, color 0.2s;
+            background: #1c1c1e; border: none; color: var(--text-muted);
+            padding: 6px 12px; font-size: 0.8rem; font-weight: 600; border-radius: 6px; cursor: pointer;
+            transition: background 0.2s, color 0.2s;
         }
         body.light-theme .view-btn { background: #e3e3e6; }
         .view-btn.active { background: var(--accent-color); color: #ffffff; }
 
-        /* 🚀 疊卡視覺 (Apple Wallet Stack View) 核心佈局 */
-        #gameList { 
-            display: flex; flex-direction: column; 
-            gap: 0px; /* 移除間距，改靠 sticky 重疊 */
-            padding-top: 10px;
-        }
-
-        /* 🚀 列表模式下的疊卡容器 */
-        #gameList:not(.grid-view) .swipe-container {
-            position: sticky;
-            /* 根據卡片 index 計算卡片停靠頂部的位置，形成密合重疊層次 */
-            top: calc(90px + var(--card-index, 0) * 38px);
-            margin-bottom: 110px; /* 留出底部卡片露出的空間 */
-            box-shadow: 0 -4px 20px rgba(0,0,0,0.3);
+        .swipe-container {
+            position: relative; width: 100%; overflow: hidden; border-radius: 16px;
             background-color: var(--success-color);
-            border-radius: 20px;
         }
-        #gameList:not(.grid-view) .swipe-container.back-to-price { background-color: var(--accent-color); }
+        .swipe-container.back-to-price { background-color: var(--accent-color); }
+        #gameList.grid-view .swipe-container { background-color: transparent; }
+        #gameList.grid-view .swipe-action-btn { display: none !important; }
 
         .game-row {
-            background-color: var(--card-bg); padding: 16px; display: flex; align-items: flex-start;
-            cursor: pointer; position: relative; z-index: 2;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.3s; width: 100%; border-radius: 20px; 
-            border: 1px solid rgba(255,255,255,0.05);
+            background-color: var(--card-bg); padding: 14px; display: flex; align-items: flex-start;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15); cursor: pointer; position: relative; z-index: 2;
+            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; border-radius: 16px; 
         }
-        body.light-theme .game-row { border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
-
-        /* 🚀 動態套用平台專屬皮革/漸變質感底色 */
-        .game-row.theme-switch { background: var(--gradient-switch); color: #fff; }
-        .game-row.theme-ps5 { background: var(--gradient-ps5); color: #fff; }
-        .game-row.theme-ps4 { background: var(--gradient-ps4); color: #fff; }
-        .game-row.theme-xbox { background: var(--gradient-xbox); color: #fff; }
-        .game-row.theme-pc { background: var(--gradient-pc); color: #fff; }
+        #gameList.grid-view .game-row { flex-direction: column; align-items: stretch; padding: 10px; height: 100%; transform: none !important; }
         
-        /* 當卡片被套用平台漸變時，微調文字配色確保可讀性 */
-        .game-row[class*="theme-"] .game-row-title { color: #ffffff !important; }
-        .game-row[class*="theme-"] .price-source { color: rgba(255,255,255,0.7) !important; }
-        .game-row[class*="theme-"] .main-price-item { background: rgba(0,0,0,0.2) !important; }
-
-        /* 圖鑑模式 (Grid View) 保持原樣不變 */
-        #gameList.grid-view {
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; padding-top: 0;
-        }
-        #gameList.grid-view .swipe-container { background-color: transparent; position: static !important; margin-bottom: 0 !important; box-shadow: none; }
-        #gameList.grid-view .swipe-action-btn { display: none !important; }
-        #gameList.grid-view .game-row {
-            flex-direction: column; align-items: stretch; padding: 10px; height: 100%; transform: none !important;
-            background: var(--card-bg) !important; /* 圖鑑模式維持素色 */
-        }
-        #gameList.grid-view .game-row-title { color: var(--text-color) !important; }
-
         .swipe-action-btn {
             position: absolute; top: 0; right: 0; bottom: 0; width: 80px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
@@ -160,29 +146,21 @@
         .game-cover-wrapper {
             width: 75px; height: 95px; border-radius: 10px; overflow: hidden; background: var(--input-bg);
             display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 16px; 
-            box-shadow: 2px 4px 10px rgba(0,0,0,0.4);
         }
         #gameList.grid-view .game-cover-wrapper { width: 100%; height: 140px; margin-right: 0; margin-bottom: 8px; }
         .game-cover-img { width: 100%; height: 100%; object-fit: cover; }
         .game-cover-placeholder { font-size: 1.8rem; }
         .game-right-info { flex: 1; min-width: 0; }
-        
-        #gameList.grid-view .game-right-info {
-            width: 100%; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1;
-        }
-
+        #gameList.grid-view .game-right-info { width: 100%; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
         .game-row-title { font-size: 1.15rem; font-weight: bold; margin-bottom: 8px; color: var(--text-color); }
-        #gameList.grid-view .game-row-title {
-            font-size: 0.95rem; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2;
-            -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; height: 2.6rem; 
-        }
+        #gameList.grid-view .game-row-title { font-size: 0.95rem; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; height: 2.6rem; }
 
         .game-row-prices-container { display: flex; flex-direction: column; gap: 6px; }
         .main-price-item {
             display: flex; align-items: center; justify-content: space-between;
             background: var(--item-row-bg); padding: 5px 8px; border-radius: 6px; font-size: 0.85rem;
         }
-        .main-price-item.cheapest-row { background: rgba(52, 199, 89, 0.12); border: 1px solid rgba(52, 199, 89, 0.3); }
+        .main-price-item.cheapest-row { background: rgba(52, 199, 89, 0.08); border: 1px solid rgba(52, 199, 89, 0.2); }
 
         .platform-badge { font-size: 0.7rem; font-weight: bold; padding: 2px 5px; border-radius: 4px; color: white; text-transform: uppercase; }
         .badge-switch { background-color: var(--color-switch); }
@@ -198,8 +176,7 @@
         .price-source { color: var(--text-muted); margin-left: 6px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .price-num { color: #ffcc00; font-weight: bold; }
         body.light-theme .price-num { color: #d97706; }
-        .game-row[class*="theme-"] .price-num { color: #ffcc00 !important; } /* 漸變卡片下數字顏色鎖定 */
-        .price-num.is-cheapest { color: var(--success-color) !important; font-weight: 800; }
+        .price-num.is-cheapest { color: var(--success-color); font-weight: 800; }
 
         /* 設定頁面排版 */
         #settingsPage { display: none; flex-direction: column; gap: 20px; }
@@ -284,9 +261,21 @@
 </head>
 <body>
 
-    <header>
-        <h1>🎮 香港 Game 價紀錄</h1>
-    </header>
+    <!-- 🚀 新增：全螢幕智慧 Loading 轉場畫面 -->
+    <div id="loadingOverlay">
+        <div class="loading-text">正在載入香港 Game 價紀錄</div>
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+    
+    <!-- 🚀 新增：在 HTML 最前方預先執行主題渲染，防止閃白光 -->
+    <script>
+        const initialTheme = localStorage.getItem('hk_game_theme') || 'dark';
+        if (initialTheme === 'light') { document.body.classList.add('light-theme'); }
+    </script>
 
     <div class="segmented-control">
         <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">🔍 格價中</button>
@@ -294,6 +283,7 @@
         <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">⚙️ 系統設定</button>
     </div>
 
+    <!-- 檢視切換欄 -->
     <div class="view-toggle-container" id="viewToggleArea">
         <button class="view-btn" id="btnListView" onclick="setViewMode('list')">☰ 列表</button>
         <button class="view-btn" id="btnGridView" onclick="setViewMode('grid')">🎴 圖鑑</button>
@@ -302,6 +292,7 @@
     <div id="gameList"></div>
     <div id="emptyTips" class="empty-tips">未有紀錄，撳下面加第一隻 Game 啦！</div>
 
+    <!-- 設定分頁 -->
     <div id="settingsPage">
         <div class="settings-group-title">視覺外觀</div>
         <div class="settings-group">
@@ -326,6 +317,7 @@
 
     <button id="fabBtn" onclick="openAddModal()">＋ 新增遊戲紀錄</button>
 
+    <!-- 遊戲彈窗 -->
     <div id="gameModal" class="modal">
         <div class="modal-content">
             <div class="form-btns-top">
@@ -382,6 +374,7 @@
         </div>
     </div>
 
+    <!-- 備份彈窗 -->
     <div id="backupModal" class="modal">
         <div class="modal-content" style="height: auto; max-height: 80vh;">
             <div class="form-btns-top">
@@ -405,20 +398,18 @@
                 isBought: false,
                 prices: [
                     { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" },
-                    { platform: "pc", condition: "一手", note: "Steam 數位", price: "450" }
-                ]
-            },
-            {
-                name: "薩爾達傳說 王國之淚",
-                cover: "",
-                isBought: false,
-                prices: [
-                    { platform: "switch", condition: "二手", note: "信和購入", price: "260" }
+                    { platform: "ps5", condition: "一手", note: "信和地庫", price: "399" },
+                    { platform: "ps5", condition: "一手", note: "PS Store 數碼", price: "568" }
                 ]
             }
         ];
 
-        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || advancedTestTemplate;
+        let games = JSON.parse(localStorage.getItem('hk_game_prices_v5'));
+        if (!games || !Array.isArray(games)) {
+            games = advancedTestTemplate;
+            localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
+        }
+
         let currentTab = 'price'; 
         let currentViewMode = localStorage.getItem('hk_game_view_mode') || 'list'; 
         let currentTheme = localStorage.getItem('hk_game_theme') || 'dark';
@@ -443,7 +434,6 @@
             currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
             localStorage.setItem('hk_game_theme', currentTheme);
             initTheme();
-            renderGames(); // 主題切換時重新渲染疊卡底色
         }
 
         function setViewMode(mode) {
@@ -458,26 +448,23 @@
             renderGames();
         }
 
-        // 🚀 核心重構：renderGames 加上 Apple Wallet 疊卡特效與動態卡帶色彩適配
         function renderGames() {
             const listEl = document.getElementById('gameList');
             const tipsEl = document.getElementById('emptyTips');
             if (currentTab === 'settings') return;
 
             listEl.innerHTML = '';
-            let visibleIndex = 0; // 用於計算純顯示卡片的重疊 sticky index
+            let hasVisibleGame = false;
 
             games.forEach((game, realIndex) => {
                 if (currentTab === 'bought' && !game.isBought) return;
                 if (currentTab === 'price' && game.isBought) return;
 
+                hasVisibleGame = true;
+
                 const swipeContainer = document.createElement('div');
                 swipeContainer.className = 'swipe-container' + (currentTab === 'bought' ? ' back-to-price' : '');
                 swipeContainer.id = `swipe_id_${realIndex}`;
-                
-                // 🚀 將當前顯示卡片的累計 index 傳給 CSS 變數，達成漸進式重疊
-                swipeContainer.style.setProperty('--card-index', visibleIndex);
-                visibleIndex++;
 
                 const actionBtnHtml = currentTab === 'price'
                     ? `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, true)">💰<br>已買</div>`
@@ -496,12 +483,6 @@
                             }
                         }
                     });
-                }
-
-                // 🚀 根據該遊戲名單的第一個價格平台，動態為卡片套用對應的主題
-                let platformThemeClass = '';
-                if (currentTheme === 'dark' && game.prices && game.prices.length > 0) {
-                    platformThemeClass = ` theme-${game.prices[0].platform}`;
                 }
 
                 let pricesHtml = '';
@@ -555,7 +536,7 @@
 
                 swipeContainer.innerHTML = `
                     ${actionBtnHtml}
-                    <div class="game-row${platformThemeClass}" id="row_id_${realIndex}" 
+                    <div class="game-row" id="row_id_${realIndex}" 
                          onclick="openEditModal(${realIndex})"
                          ontouchstart="handleTouchStart(event)" 
                          ontouchmove="handleTouchMove(event, ${realIndex})" 
@@ -570,7 +551,7 @@
                 listEl.appendChild(swipeContainer);
             });
 
-            if (visibleIndex === 0) {
+            if (!hasVisibleGame) {
                 tipsEl.style.display = 'block';
                 tipsEl.innerText = currentTab === 'bought' ? '收藏庫空空如也，向左拉格價中嘅 Game 移入嚟啦！' : '清單無紀錄，撳下面加第一隻 Game！';
             } else {
@@ -865,6 +846,17 @@
                 closeModal();
             }
         }
+
+        // 🚀 智慧延時淡出：當網頁資源準備好後，給予 600ms 短暫展示動態 Loading，然後絲滑淡出
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const loader = document.getElementById('loadingOverlay');
+                loader.style.opacity = '0';
+                setTimeout(() => {
+                    loader.style.visibility = 'hidden';
+                }, 300);
+            }, 600);
+        });
 
         initTheme();
         setViewMode(currentViewMode);
