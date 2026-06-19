@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Game 價紀錄器</title>
+    <title>香港 Game 價紀錄器 (手勢格價版)</title>
     
-    <!-- PWA 相關設定 -->
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,6 +37,7 @@
 
             --bubble-bg: rgba(28, 28, 30, 0.9);
             --bubble-shadow: rgba(0, 0, 0, 0.4);
+            --swipe-track-bg: #2c2c2e;
         }
 
         body.light-theme {
@@ -54,6 +54,7 @@
 
             --bubble-bg: rgba(255, 255, 255, 0.9);
             --bubble-shadow: rgba(0, 0, 0, 0.1);
+            --swipe-track-bg: #e5e5ea;
         }
 
         * {
@@ -117,7 +118,7 @@
         body.light-theme .view-btn { background: #e3e3e6; }
         .view-btn.active { background: var(--accent-color); color: #ffffff; }
 
-        /* 清單容器 */
+        /* 🚀 雙向手勢滑動卡片容器 (支援左滑與右滑) */
         #gameList { 
             display: flex; flex-direction: column; gap: 14px; 
             flex-grow: 1; align-content: start; 
@@ -127,23 +128,31 @@
             grid-auto-rows: max-content; align-content: start; 
         }
 
-        .swipe-container { position: relative; width: 100%; overflow: hidden; border-radius: 16px; background-color: var(--success-color); }
-        .swipe-container.back-to-price { background-color: var(--accent-color); }
-        #gameList.grid-view .swipe-container { background-color: transparent; }
+        .swipe-container { 
+            position: relative; width: 100%; overflow: hidden; border-radius: 16px; 
+            background-color: var(--swipe-track-bg); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        #gameList.grid-view .swipe-container { background-color: transparent; box-shadow: none; }
         #gameList.grid-view .swipe-action-btn { display: none !important; }
 
+        /* 🚀 Bubble Style 卡片主體：乾淨包覆獨立物件 */
         .game-row {
             background-color: var(--card-bg); padding: 14px; display: flex; align-items: flex-start;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1); cursor: pointer; position: relative; z-index: 2;
-            transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; border-radius: 16px; 
+            cursor: default; position: relative; z-index: 2;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1); width: 100%; border-radius: 16px; 
+            border: 1px solid var(--input-border);
         }
-        #gameList.grid-view .game-row { flex-direction: column; align-items: stretch; padding: 10px; height: 100%; transform: none !important; }
+        #gameList.grid-view .game-row { cursor: pointer; flex-direction: column; align-items: stretch; padding: 10px; height: 100%; transform: none !important; }
         
+        /* 🚀 雙向手勢按鈕排版：左邊刪除、右邊編輯 */
         .swipe-action-btn {
-            position: absolute; top: 0; right: 0; bottom: 0; width: 80px;
+            position: absolute; top: 0; bottom: 0; width: 80px;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             color: white; font-weight: bold; font-size: 0.85rem; z-index: 1; cursor: pointer;
         }
+        .swipe-action-btn.delete { left: 0; background-color: var(--danger-color); }
+        .swipe-action-btn.edit { right: 0; background-color: var(--accent-color); }
 
         .game-cover-wrapper {
             width: 75px; height: 95px; border-radius: 10px; overflow: hidden; background: var(--input-bg);
@@ -155,8 +164,13 @@
         .game-right-info { flex: 1; min-width: 0; }
         #gameList.grid-view .game-right-info { width: 100%; display: flex; flex-direction: column; justify-content: space-between; flex-grow: 1; }
         
-        .game-row-title { font-size: 1.15rem; font-weight: bold; margin-bottom: 8px; color: var(--text-color); }
-        #gameList.grid-view .game-row-title { font-size: 0.95rem; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; height: 2.6rem; }
+        .game-row-title { font-size: 1.15rem; font-weight: bold; margin-bottom: 4px; color: var(--text-color); }
+        #gameList.grid-view .game-row-title { font-size: 0.95rem; margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; text-overflow: ellipsis; height: 2.6rem; }
+
+        /* 🚀 新增：日期資訊標籤 */
+        .game-row-date {
+            font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; display: block;
+        }
 
         .game-row-prices-container { display: flex; flex-direction: column; gap: 6px; }
         .main-price-item {
@@ -198,7 +212,7 @@
             color: var(--text-color); font-family: monospace; font-size: 16px; padding: 12px; border-radius: 10px; resize: none; outline: none; margin-bottom: 15px;
         }
 
-        /* 左側懸浮膠囊導航欄 (Bubble Box Nav) */
+        /* 左側懸浮膠囊導航欄 */
         .segmented-control {
             display: flex; 
             background: var(--bubble-bg);
@@ -208,7 +222,6 @@
             position: fixed; 
             bottom: calc(24px + env(safe-area-inset-bottom)); 
             left: 20px; 
-            width: calc(100快速 - 105px); 
             width: calc(100% - 105px); 
             max-width: 270px; 
             margin-bottom: 0; 
@@ -217,9 +230,7 @@
             box-shadow: 0 12px 30px var(--bubble-shadow);
             border: 1px solid rgba(255, 255, 255, 0.08);
         }
-        body.light-theme .segmented-control {
-            border: 1px solid rgba(0, 0, 0, 0.05);
-        }
+        body.light-theme .segmented-control { border: 1px solid rgba(0, 0, 0, 0.05); }
         .segment-btn { 
             flex: 1; background: none; border: none; color: var(--text-muted); padding: 12px 0; 
             font-size: 0.88rem; font-weight: 600; border-radius: 25px; cursor: pointer; transition: all 0.25s ease;
@@ -227,44 +238,26 @@
         .segment-btn.active { background: #3a3a3c; color: #ffffff; }
         body.light-theme .segment-btn.active { background: var(--accent-color); color: #ffffff; }
 
-        /* 右下角圓形大加號浮動按鈕 (Circular FAB) */
+        /* 右下角大加號按鈕 */
         #fabBtn { 
-            position: fixed; 
-            bottom: calc(24px + env(safe-area-inset-bottom)); 
-            right: 20px; 
-            width: 58px; 
-            height: 58px; 
-            border-radius: 50%; 
-            background-color: var(--accent-color); 
-            color: white; 
-            border: none; 
-            font-size: 1.8rem; 
-            font-weight: normal; 
-            z-index: 999; 
+            position: fixed; bottom: calc(24px + env(safe-area-inset-bottom)); right: 20px; 
+            width: 58px; height: 58px; border-radius: 50%; background-color: var(--accent-color); 
+            color: white; border: none; font-size: 1.8rem; z-index: 999; 
             box-shadow: 0 12px 30px rgba(0, 122, 255, 0.35); 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            left: auto;
-            transform: none;
-            transition: background-color 0.2s, transform 0.1s;
+            display: flex; align-items: center; justify-content: center; transition: background-color 0.2s, transform 0.1s;
         }
-        #fabBtn:active {
-            transform: scale(0.94);
-        }
+        #fabBtn:active { transform: scale(0.94); }
 
-        /* 表單彈窗與鍵盤定位修正 */
+        /* 表單彈窗與自訂定位鍵盤核心修復 */
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); justify-content: center; align-items: flex-end; z-index: 1000; }
         .modal-content { 
             background-color: var(--card-bg); width: 100%; max-width: 500px; border-radius: 24px 24px 0 0; 
-            padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); 
-            animation: slideUp 0.25s ease-out; max-height: 92vh; display: flex; flex-direction: column; 
-            position: relative; /* 🚀 修正：設為絕對定位基準 */
+            padding: 20px; padding-bottom: calc(20px + env(safe-area-inset-bottom)); animation: slideUp 0.25s ease-out; 
+            height: 92vh; display: flex; flex-direction: column; position: relative;
         }
         @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
         
-        /* 內頁主容器 */
-        .modal-body { overflow-y: auto; flex: 1; padding-bottom: 30px; scroll-behavior: smooth; }
+        .modal-body { overflow-y: auto; flex: 1; padding-bottom: 30px; scroll-behavior: smooth; transition: padding-bottom 0.2s; }
 
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 4px; }
@@ -284,23 +277,15 @@
 
         .btn-remove-price { background: none; border: none; color: var(--danger-color); font-size: 1.1rem; cursor: pointer; padding: 0 2px; }
         .btn-add-price-row { background: var(--input-bg); color: var(--accent-color); border: 1px dashed var(--accent-color); width: 100%; padding: 12px; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 5px; margin-bottom: 15px; }
+        
+        /* 外部大提交按鈕固定於鍵盤上方 */
         .btn-main-submit { background-color: var(--success-color); color: white; border: none; width: 100%; padding: 14px; border-radius: 10px; font-size: 1.1rem; font-weight: bold; cursor: pointer; box-shadow: 0 4px 10px rgba(52,199,89,0.3); margin-top: 10px; }
 
-        /* 🚀 終極修正：自訂觸控鍵盤排版與絕對定位鎖定 */
+        /* 🚀 鍵盤鎖定死在 Modal 彈窗最底端，絕不位移 */
         .custom-keyboard { 
-            background: var(--keyboard-bg); 
-            padding: 15px; 
-            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
-            display: none; 
-            grid-template-columns: repeat(3, 1fr) 1.2fr; 
-            gap: 10px; 
-            border-top: 1px solid var(--input-border); 
-            z-index: 1100; 
-            position: absolute; /* 改為絕對定位，死死鎖定在彈窗最底端 */
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            border-radius: 0 0 24px 24px;
+            background: var(--keyboard-bg); padding: 15px; padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
+            display: none; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 10px; border-top: 1px solid var(--input-border); 
+            z-index: 1100; position: absolute; bottom: 0; left: 0; width: 100%; border-radius: 0 0 24px 24px;
         }
         .key { background: var(--key-bg); color: var(--text-color); border: none; border-radius: 10px; padding: 12px 0; font-size: 1.3rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.15); }
         .key:active { background: var(--key-active); }
@@ -311,13 +296,11 @@
 
         .form-btns-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
         .btn-text { background: none; border: none; font-size: 1rem; font-weight: bold; cursor: pointer; }
-        .empty-tips { text-align: center; color: var(--text-muted); margin-top: 60px; font-size: 0.9rem; }
         #gameForm { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
     </style>
 </head>
 <body>
 
-    <!-- ⏳ 全螢幕智慧跳跳點 Loading 轉場 -->
     <div id="loadingOverlay">
         <div class="loading-text">正在載入香港 Game 價紀錄</div>
         <div class="loading-dots">
@@ -336,22 +319,18 @@
         <h1>🎮 香港 Game 價紀錄</h1>
     </header>
 
-    <!-- 頂部搜尋欄 -->
     <div class="search-container" id="searchContainer">
         <input type="text" id="searchBar" placeholder="🔍 搜尋遊戲名稱..." oninput="renderGames()">
     </div>
 
-    <!-- 檢視模式切換 -->
     <div class="view-toggle-container" id="viewToggleArea">
         <button class="view-btn" id="btnListView" onclick="setViewMode('list')">☰ 列表</button>
         <button class="view-btn" id="btnGridView" onclick="setViewMode('grid')">🎴 圖鑑</button>
     </div>
 
-    <!-- 主數據清單 -->
     <div id="gameList"></div>
     <div id="emptyTips" class="empty-tips">未有紀錄，撳下面加第一隻 Game 啦！</div>
 
-    <!-- 全獨立系統設定頁面 -->
     <div id="settingsPage">
         <div class="settings-group-title">視覺外觀</div>
         <div class="settings-group">
@@ -374,23 +353,20 @@
         </div>
     </div>
 
-    <!-- 圓形大加號浮動按鈕 -->
     <button id="fabBtn" onclick="openAddModal()">＋</button>
 
-    <!-- iOS 膠囊導航欄 (Bubble Box) -->
     <div class="segmented-control">
         <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">格價</button>
         <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">已買</button>
         <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">設定</button>
     </div>
 
-    <!-- 遊戲詳細編輯視窗 -->
     <div id="gameModal" class="modal">
         <div class="modal-content">
             <div class="form-btns-top">
-                <button type="button" class="btn-text" style="color:var(--danger-color);" id="btnDelete" onclick="deleteGame()">刪除遊戲</button>
+                <button type="button" class="btn-text" style="color:var(--text-muted);" onclick="closeModal()">取消</button>
                 <h3 id="modalTitle">遊戲價格詳情</h3>
-                <button type="button" class="btn-text" style="color:var(--accent-color);" onclick="closeModal()">取消</button>
+                <button type="button" class="btn-text" style="color:var(--accent-color);" onclick="handleFormSubmit()">完成</button>
             </div>
 
             <form id="gameForm" onsubmit="event.preventDefault();">
@@ -409,41 +385,46 @@
                         <label>封面圖片網址 (可不填)</label>
                         <input type="url" id="gCover" placeholder="https://example.com/image.png" onfocus="hideCustomKeyboard()">
                     </div>
+
+                    <div class="form-group">
+                        <label>庫存狀態標記</label>
+                        <select id="gIsBought" onfocus="hideCustomKeyboard()">
+                            <option value="false">🔍 格價中 (未購入)</option>
+                            <option value="true">📦 已買在庫 (已收藏)</option>
+                        </select>
+                    </div>
                     
                     <div class="form-group">
                         <label>價格紀錄（點擊價錢欄位入數）</label>
                         <div id="dynamicPriceArea"></div>
                         <button type="button" class="btn-add-price-row" onclick="addPriceRowWithScroll('switch', '一手', '', '')">＋ 新增價格欄位</button>
                     </div>
+
+                    <button type="button" class="btn-main-submit" id="btnMainSubmit" onclick="handleFormSubmit()">💾 儲存所有修改</button>
                 </div>
             </form>
 
-            <!-- 🚀 終極修正：完美填滿、無空隙對稱網格數字觸控鍵盤 -->
             <div class="custom-keyboard" id="customKeyboard">
-                <button type="button" class="key" onclick="handleKeyPress(event, '1')">1</button>
-                <button type="button" class="key" onclick="handleKeyPress(event, '2')">2</button>
-                <button type="button" class="key" onclick="handleKeyPress(event, '3')">3</button>
-                <button type="button" class="key action-key delete-key" onclick="handleKeyPress(event, 'BACK')">⌫</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '1')">1</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '2')">2</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '3')">3</button>
+                <button type="button" class="key action-key delete-key" ontouchstart="handleKeyPress(event, 'BACK')">⌫</button>
                 
-                <button type="button" class="key" onclick="handleKeyPress(event, '4')">4</button>
-                <button type="button" class="key" onclick="handleKeyPress(event, '5')">5</button>
-                <button type="button" class="key" onclick="handleKeyPress(event, '6')">6</button>
-                <button type="button" class="key action-key done-key" onclick="handleKeyDone(event)">完成<br>🔽</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '4')">4</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '5')">5</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '6')">6</button>
+                <button type="button" class="key action-key done-key" ontouchstart="handleKeyDone(event)">完成<br>🔽</button>
                 
-                <button type="button" class="key" onclick="handleKeyPress(event, '7')">7</button>
-                <button type="button" class="key" onclick="handleKeyPress(event, '8')">8</button>
-                <button type="button" class="key" onclick="handleKeyPress(event, '9')">9</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '7')">7</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '8')">8</button>
+                <button type="button" class="key" ontouchstart="handleKeyPress(event, '9')">9</button>
                 
-                <button type="button" class="key" style="grid-column: span 3;" onclick="handleKeyPress(event, '0')">0</button>
-                <button type="button" class="key action-key" onclick="handleKeyPress(event, 'CLEAR')">Clear</button>
+                <button type="button" class="key" style="grid-column: span 3;" ontouchstart="handleKeyPress(event, '0')">0</button>
+                <button type="button" class="key action-key" ontouchstart="handleKeyPress(event, 'CLEAR')">Clear</button>
             </div>
-            
-            <!-- 獨立外部大提交按鈕 -->
-            <button type="button" class="btn-main-submit" style="position: absolute; bottom: 20px; width: calc(100% - 40px); left: 20px; z-index: 1050;" id="btnMainSubmit" onclick="handleFormSubmit()">💾 儲存所有修改</button>
         </div>
     </div>
 
-    <!-- 備份數據 Modal 彈窗 -->
     <div id="backupModal" class="modal">
         <div class="modal-content" style="height: auto; max-height: 80vh;">
             <div class="form-btns-top">
@@ -460,11 +441,13 @@
     </div>
 
     <script>
+        // 初始測試數據內置自帶日期戳
         const advancedTestTemplate = [
             { 
                 name: "魔物獵人 荒野 Monster Hunter Wilds", 
                 cover: "https://images.unsplash.com/photo-1551103782-8ab07afd45c1?w=150", 
                 isBought: false,
+                date: 1718788400000, // 模擬過去加入的日期
                 prices: [
                     { platform: "ps5", condition: "一手", note: "黃金A舖", price: "418" },
                     { platform: "ps5", condition: "一手", note: "信和地庫", price: "399" }
@@ -480,6 +463,18 @@
         let currentActivePriceInput = null;
         let touchStartX = 0;
         let activeSwipeContainer = null;
+
+        // 🚀 新增：時間格式化小助手 (YYYY-MM-DD HH:mm)
+        function formatDate(timestamp) {
+            if (!timestamp) return '未錄入時間';
+            const d = new Date(timestamp);
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const date = String(d.getDate()).padStart(2, '0');
+            const h = String(d.getHours()).padStart(2, '0');
+            const min = String(d.getMinutes()).padStart(2, '0');
+            return `📅 更新: ${y}-${m}-${date} ${h}:${min}`;
+        }
 
         function initTheme() {
             if (currentTheme === 'light') {
@@ -511,6 +506,7 @@
             renderGames();
         }
 
+        // 🚀 重構：名單按「最新更新日期排序」，最新、最 update 嘅排最上面
         function renderGames() {
             const listEl = document.getElementById('gameList');
             const tipsEl = document.getElementById('emptyTips');
@@ -520,6 +516,9 @@
             let hasVisibleGame = false;
             const searchKeyword = document.getElementById('searchBar').value.toLowerCase().trim();
 
+            // 🚀 核心排序邏輯：根據 game.date 降序排列 (Newest on top)
+            games.sort((a, b) => (b.date || 0) - (a.date || 0));
+
             games.forEach((game, realIndex) => {
                 if (currentTab === 'bought' && !game.isBought) return;
                 if (currentTab === 'price' && game.isBought) return;
@@ -528,12 +527,14 @@
                 hasVisibleGame = true;
 
                 const swipeContainer = document.createElement('div');
-                swipeContainer.className = 'swipe-container' + (currentTab === 'bought' ? ' back-to-price' : '');
+                swipeContainer.className = 'swipe-container';
                 swipeContainer.id = `swipe_id_${realIndex}`;
 
-                const actionBtnHtml = currentTab === 'price'
-                    ? `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, true)">💰<br>已買</div>`
-                    : `<div class="swipe-action-btn" onclick="event.stopPropagation(); toggleBoughtStatus(${realIndex}, false)">🔄<br>格價</div>`;
+                // 🚀 重新設計雙向滑動按鈕：左邊滑開露出刪除，右邊滑開露出編輯
+                const actionBtnHtml = `
+                    <div class="swipe-action-btn delete" onclick="event.stopPropagation(); deleteGameDirect(${realIndex})">🗑️ 刪除</div>
+                    <div class="swipe-action-btn edit" onclick="event.stopPropagation(); openEditModal(${realIndex})">📝 編輯</div>
+                `;
 
                 let minPriceValue = Infinity;
                 let minPriceIndex = -1;
@@ -601,14 +602,14 @@
 
                 swipeContainer.innerHTML = `
                     ${actionBtnHtml}
-                    <div class="game-row" id="row_id_${realIndex}" 
-                         onclick="openEditModal(${realIndex})"
+                    <div class="game-row" class="bubble-style-box" id="row_id_${realIndex}" 
                          ontouchstart="handleTouchStart(event)" 
                          ontouchmove="handleTouchMove(event, ${realIndex})" 
                          ontouchend="handleTouchEnd(event, ${realIndex})">
                         <div class="game-cover-wrapper">${coverHtml}</div>
                         <div class="game-right-info">
                             <div class="game-row-title">${game.name}</div>
+                            <span class="game-row-date">${formatDate(game.date)}</span>
                             <div class="game-row-prices-container">${pricesHtml}</div>
                         </div>
                     </div>
@@ -655,13 +656,7 @@
             }
         }
 
-        function toggleBoughtStatus(index, status) {
-            games[index].isBought = status;
-            localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
-            activeSwipeContainer = null;
-            renderGames();
-        }
-
+        /* 📱 修正與升級：支援全新雙向 iOS 手勢 (左滑編輯、右滑刪除) */
         function handleTouchStart(e) {
             if (currentViewMode === 'grid') return;
             if (activeSwipeContainer) {
@@ -674,13 +669,20 @@
         function handleTouchMove(e, index) {
             if (currentViewMode === 'grid') return;
             const currentX = e.touches[0].clientX;
-            const diffX = touchStartX - currentX;
+            const diffX = touchStartX - currentX; // 正數代表向左拉，負數代表向右拉
             const row = document.getElementById(`row_id_${index}`);
 
+            // 限制最大拉動幅度為 80px
             if (diffX > 10) {
+                // 向左滑動 (Reveal Edit)
                 const moveX = Math.min(diffX, 80);
                 row.style.transform = `translateX(-${moveX}px)`;
-                if(diffX > 30) e.preventDefault();
+                e.preventDefault();
+            } else if (diffX < -10) {
+                // 向右滑動 (Reveal Delete)
+                const moveX = Math.min(Math.abs(diffX), 80);
+                row.style.transform = `translateX(${moveX}px)`;
+                e.preventDefault();
             }
         }
 
@@ -692,9 +694,15 @@
             const diffX = touchStartX - currentX;
 
             if (diffX > 40) {
+                // 成功觸發左滑 (鎖定在左邊 -80px)
                 row.style.transform = 'translateX(-80px)';
                 activeSwipeContainer = container;
+            } else if (diffX < -40) {
+                // 成功觸發右滑 (鎖定在右邊 80px)
+                row.style.transform = 'translateX(80px)';
+                activeSwipeContainer = container;
             } else {
+                // 力度不夠，彈回原點
                 row.style.transform = 'translateX(0px)';
                 activeSwipeContainer = null;
             }
@@ -784,11 +792,11 @@
             return { inputPrice: rowDiv.querySelector('.input-price'), id: rowId };
         }
 
-        // 🚀 修正：優化新增與捲動對齊，撐大底部間距，防止鍵盤蓋住輸入格
+        // 🚀 修正：優化新增價格動態留白捲動對齊，絕不跌出畫面外
         function addPriceRowWithScroll(platform, condition, note, price) {
             const rowInfo = addPriceRow(platform, condition, note, price);
             setTimeout(() => {
-                document.getElementById('modalBody').style.paddingBottom = '280px';
+                document.getElementById('modalBody').style.paddingBottom = '340px';
                 document.getElementById(rowInfo.id).scrollIntoView({ behavior: 'smooth', block: 'center' });
                 activatePriceKeyboard(rowInfo.inputPrice, rowInfo.id);
             }, 100);
@@ -802,28 +810,25 @@
             }
         }
 
-        // 🚀 修正：智能為內頁加上動態留白，將正在輸入嘅格仔流暢捲動去中間
         function activatePriceKeyboard(inputEl, rowId) {
             document.querySelectorAll('.edit-price-row').forEach(el => el.classList.remove('active-row'));
             currentActivePriceInput = inputEl;
             document.getElementById(rowId).classList.add('active-row');
             
-            // 隱藏儲存按鈕，防止鍵盤與大 submit 按鈕重疊
             document.getElementById('btnMainSubmit').style.display = 'none';
             document.getElementById('customKeyboard').style.display = 'grid'; 
             
-            document.getElementById('modalBody').style.paddingBottom = '280px';
+            document.getElementById('modalBody').style.paddingBottom = '340px';
             document.activeElement.blur();
             
             setTimeout(() => {
                 document.getElementById(rowId).scrollIntoView({ behavior: 'smooth', block: 'center' });
-            }, 80);
+            }, 100);
         }
 
-        // 🚀 修正：關閉鍵盤時還原大按鈕與內頁間距
         function hideCustomKeyboard() {
             document.getElementById('customKeyboard').style.display = 'none'; 
-            document.getElementById('btnMainSubmit').style.display = 'block'; // 恢復儲存按鈕
+            document.getElementById('btnMainSubmit').style.display = 'block'; 
             document.querySelectorAll('.edit-price-row').forEach(el => el.classList.remove('active-row'));
             currentActivePriceInput = null;
             document.getElementById('modalBody').style.paddingBottom = '30px';
@@ -846,6 +851,7 @@
             document.getElementById('modalTitle').innerText = "新增遊戲紀錄";
             document.getElementById('editIndex').value = "";
             document.getElementById('btnDelete').style.visibility = "hidden";
+            document.getElementById('gIsBought').value = "false"; // 預設新 Game 處於格價狀態
             document.getElementById('dynamicPriceArea').innerHTML = '';
             document.getElementById('gameForm').reset();
             updateScraperLinks();
@@ -855,14 +861,10 @@
         }
 
         function openEditModal(index) {
-            if (currentViewMode !== 'grid') {
-                const row = document.getElementById(`row_id_${index}`);
-                if (row && row.style.transform !== '' && row.style.transform !== 'translateX(0px)') {
-                    row.style.transform = 'translateX(0px)';
-                    activeSwipeContainer = null;
-                    return;
-                }
-            }
+            // 從滑動手勢按鈕點進來時，先把左滑位移強制歸零
+            const row = document.getElementById(`row_id_${index}`);
+            if(row) row.style.transform = 'translateX(0px)';
+            activeSwipeContainer = null;
 
             const game = games[index];
             document.getElementById('modalTitle').innerText = "修改格價資料";
@@ -870,6 +872,7 @@
             document.getElementById('btnDelete').style.visibility = "visible";
             document.getElementById('gName').value = game.name;
             document.getElementById('gCover').value = game.cover || '';
+            document.getElementById('gIsBought').value = game.isBought ? "true" : "false";
             updateScraperLinks();
 
             const area = document.getElementById('dynamicPriceArea');
@@ -884,7 +887,12 @@
             hideCustomKeyboard(); 
         }
 
-        function closeModal() { document.getElementById('gameModal').style.display = 'none'; hideCustomKeyboard(); }
+        function closeModal() { 
+            document.getElementById('gameModal').style.display = 'none'; 
+            hideCustomKeyboard(); 
+            // 關閉視窗時保險起見將所有人手勢重置
+            renderGames();
+        }
 
         function handleFormSubmit() {
             const name = document.getElementById('gName').value.trim();
@@ -901,13 +909,18 @@
             });
             
             const index = document.getElementById('editIndex').value;
+            const statusBought = (document.getElementById('gIsBought').value === "true");
             
             if (index === "") {
-                const gameData = { name: name, cover: document.getElementById('gCover').value.trim(), isBought: false, prices: pricesData };
+                // 🚀 新增一隻 Game 時：自動打上目前最新時間戳
+                const gameData = { name: name, cover: document.getElementById('gCover').value.trim(), isBought: statusBought, date: Date.now(), prices: pricesData };
                 games.push(gameData); 
             } else {
+                // 🚀 修改一隻 Game 時：每次修改儲存，自動覆蓋重新打上當前最新時間戳
                 games[index].name = name;
                 games[index].cover = document.getElementById('gCover').value.trim();
+                games[index].isBought = statusBought;
+                games[index].date = Date.now(); 
                 games[index].prices = pricesData;
             }
 
@@ -917,13 +930,23 @@
             closeModal();
         }
 
-        function deleteGame() {
-            const index = document.getElementById('editIndex').value;
-            if (index !== "" && confirm(`確定要刪除整個 "${games[index].name}" 嗎？`)) {
+        // 🚀 新增：手勢右滑時可以直接一鍵呼叫的直覺刪除
+        function deleteGameDirect(index) {
+            const row = document.getElementById(`row_id_${index}`);
+            if (confirm(`確定要刪除整個 "${games[index].name}" 嗎？`)) {
                 games.splice(index, 1);
                 localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
-                document.getElementById('searchBar').value = '';
-                switchTab(currentTab);
+                renderGames();
+            } else {
+                if(row) row.style.transform = 'translateX(0px)';
+            }
+            activeSwipeContainer = null;
+        }
+
+        function deleteGame() {
+            const index = document.getElementById('editIndex').value;
+            if (index !== "") {
+                deleteGameDirect(index);
                 closeModal();
             }
         }
