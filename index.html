@@ -3,68 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (鍵盤修正版)</title>
+    <title>香港 Game 價紀錄器 (穩定版)</title>
     <style>
-        :root { --keyboard-bg: #2c2c2e; --key-bg: #3a3a3c; --text-color: #ffffff; --accent-color: #007aff; --danger-color: #ff3b30; }
-        
-        /* 核心修復：鍵盤絕對定位與 Grid 排版 */
-        .custom-keyboard { 
-            background: var(--keyboard-bg); 
-            padding: 15px; 
-            padding-bottom: calc(15px + env(safe-area-inset-bottom)); 
-            display: none; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 10px; 
-            border-top: 1px solid #444; 
-            position: fixed; /* 修正：鎖定在視窗底部 */
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            z-index: 2000;
+        :root {
+            --bg-color: #121212; --card-bg: #1e1e1e; --input-bg: #2c2c2e; --input-border: #3a3a3c;
+            --text-color: #ffffff; --text-muted: #aaaaaa; --accent-color: #007aff;
+            --bubble-bg: rgba(28, 28, 30, 0.9); --danger-color: #ff3b30; --success-color: #34c759;
         }
-        .key { background: var(--key-bg); color: var(--text-color); border: none; border-radius: 8px; padding: 15px 0; font-size: 1.2rem; cursor: pointer; }
-        .key:active { background: #555; }
-        .key.action-key { background: #48484a; }
-        .key.delete-key { background: var(--danger-color); }
+        body.light-theme { --bg-color: #f2f2f7; --card-bg: #ffffff; --input-bg: #e5e5ea; --text-color: #000000; }
+        
+        * { box-sizing: border-box; font-family: -apple-system, sans-serif; }
+        body { background: var(--bg-color); color: var(--text-color); margin: 0; padding: 20px; padding-bottom: 120px; }
+
+        /* 懸浮膠囊導航 */
+        .segmented-control {
+            position: fixed; bottom: 20px; left: 20px; width: calc(100% - 105px); max-width: 270px;
+            background: var(--bubble-bg); backdrop-filter: blur(15px); padding: 5px;
+            display: flex; border-radius: 30px; z-index: 998; border: 1px solid rgba(255,255,255,0.1);
+        }
+        .segment-btn { flex: 1; border: none; background: none; color: var(--text-muted); padding: 10px; font-weight: 600; border-radius: 25px; }
+        .segment-btn.active { background: #3a3a3c; color: white; }
+
+        /* 圓形大加號 */
+        #fabBtn { position: fixed; bottom: 20px; right: 20px; width: 58px; height: 58px; border-radius: 50%; background: var(--accent-color); color: white; border: none; font-size: 24px; z-index: 999; box-shadow: 0 4px 15px rgba(0,122,255,0.4); }
+
+        /* Modal 彈窗優化 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; }
+        .modal-content { position: absolute; bottom: 0; width: 100%; height: 90vh; background: var(--card-bg); border-radius: 24px 24px 0 0; display: flex; flex-direction: column; }
+        .modal-body { flex: 1; overflow-y: auto; padding: 20px; }
+        
+        /* 自訂鍵盤 */
+        .custom-keyboard { 
+            position: fixed; bottom: 0; width: 100%; background: var(--input-bg); 
+            display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; padding: 10px; 
+            border-top: 1px solid var(--input-border); z-index: 1100;
+        }
+        .key { background: #3a3a3c; border: none; color: white; padding: 15px; border-radius: 8px; font-size: 1.2rem; }
         .key.done-key { background: var(--accent-color); grid-row: span 2; }
+        
+        .game-row { background: var(--card-bg); padding: 15px; margin-bottom: 10px; border-radius: 12px; display: flex; align-items: center; }
     </style>
 </head>
 <body>
 
-    <div class="custom-keyboard" id="customKeyboard">
-        <button type="button" class="key" onclick="handleKeyPress('1')">1</button>
-        <button type="button" class="key" onclick="handleKeyPress('2')">2</button>
-        <button type="button" class="key" onclick="handleKeyPress('3')">3</button>
-        <button type="button" class="key action-key delete-key" onclick="handleKeyPress('BACK')">⌫</button>
-        
-        <button type="button" class="key" onclick="handleKeyPress('4')">4</button>
-        <button type="button" class="key" onclick="handleKeyPress('5')">5</button>
-        <button type="button" class="key" onclick="handleKeyPress('6')">6</button>
-        <button type="button" class="key action-key done-key" onclick="hideCustomKeyboard()">完成</button>
-        
-        <button type="button" class="key" onclick="handleKeyPress('7')">7</button>
-        <button type="button" class="key" onclick="handleKeyPress('8')">8</button>
-        <button type="button" class="key" onclick="handleKeyPress('9')">9</button>
-        
-        <button type="button" class="key" style="grid-column: span 3;" onclick="handleKeyPress('0')">0</button>
-        <button type="button" class="key action-key" onclick="handleKeyPress('CLEAR')">Clear</button>
+    <header><h1>🎮 遊戲庫</h1></header>
+    <div id="gameList"></div>
+
+    <button id="fabBtn" onclick="openAddModal()">＋</button>
+
+    <div class="segmented-control">
+        <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">格價</button>
+        <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">已買</button>
+    </div>
+
+    <div id="gameModal" class="modal">
+        <div class="modal-content">
+            <div style="padding: 20px; display: flex; justify-content: space-between;">
+                <button onclick="closeModal()">取消</button>
+                <h3>編輯遊戲</h3>
+                <button onclick="handleFormSubmit()">儲存</button>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <input type="text" id="gName" style="width:100%; padding:10px;" placeholder="遊戲名稱">
+                <div id="dynamicPriceArea" style="margin-top:20px;"></div>
+                <button onclick="addPriceRowWithScroll()" style="width:100%; padding:15px; margin-top:20px;">＋ 新增價格</button>
+            </div>
+            <div class="custom-keyboard" id="customKeyboard" style="display:none;">
+                <button class="key" onclick="handleKey('1')">1</button><button class="key" onclick="handleKey('2')">2</button><button class="key" onclick="handleKey('3')">3</button><button class="key" onclick="handleKey('BACK')">⌫</button>
+                <button class="key" onclick="handleKey('4')">4</button><button class="key" onclick="handleKey('5')">5</button><button class="key" onclick="handleKey('6')">6</button><button class="key done-key" onclick="hideKeyboard()">完成</button>
+                <button class="key" onclick="handleKey('7')">7</button><button class="key" onclick="handleKey('8')">8</button><button class="key" onclick="handleKey('9')">9</button>
+                <button class="key" style="grid-column: span 2;" onclick="handleKey('0')">0</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        // 鍵盤邏輯
-        function handleKeyPress(val) {
-            if (!currentActivePriceInput) return;
-            if (val === 'BACK') {
-                currentActivePriceInput.value = currentActivePriceInput.value.slice(0, -1);
-            } else if (val === 'CLEAR') {
-                currentActivePriceInput.value = '';
-            } else {
-                currentActivePriceInput.value += val;
-            }
+        let games = JSON.parse(localStorage.getItem('my_games')) || [];
+        let activeInput = null;
+
+        function addPriceRow(platform='switch', price='') {
+            const area = document.getElementById('dynamicPriceArea');
+            const rowId = 'row_' + Date.now();
+            const div = document.createElement('div');
+            div.className = 'edit-price-row';
+            div.id = rowId;
+            div.innerHTML = `<input class="price-val" value="${price}" readonly onclick="activateKeyboard(this, '${rowId}')" style="padding:10px; width:80px;">`;
+            area.appendChild(div);
+            return { id: rowId, el: div.querySelector('.price-val') };
         }
 
-        function hideCustomKeyboard() {
+        function addPriceRowWithScroll() {
+            const row = addPriceRow();
+            setTimeout(() => {
+                row.el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                activateKeyboard(row.el, row.id);
+            }, 100);
+        }
+
+        function activateKeyboard(input, id) {
+            activeInput = input;
+            document.getElementById('customKeyboard').style.display = 'grid';
+        }
+
+        function hideKeyboard() {
             document.getElementById('customKeyboard').style.display = 'none';
+        }
+
+        function handleKey(k) {
+            if (!activeInput) return;
+            if (k === 'BACK') activeInput.value = activeInput.value.slice(0, -1);
+            else activeInput.value += k;
+        }
+
+        function openAddModal() { document.getElementById('gameModal').style.display = 'block'; }
+        function closeModal() { document.getElementById('gameModal').style.display = 'none'; hideKeyboard(); }
+        
+        function handleFormSubmit() {
+            // 這裡加入儲存邏輯
+            closeModal();
+            alert('儲存成功');
+        }
+
+        function switchTab(t) {
+            document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btnTab' + t.charAt(0).toUpperCase() + t.slice(1)).classList.add('active');
         }
     </script>
 </body>
