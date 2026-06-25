@@ -1,15 +1,10 @@
-/* ==========================================================================
-   全新高對比扁平主義 (Dark & Light Mode) 色盤設計
-   ========================================================================== */
-
-/* 預設為：🌙 深色模式 (對應參考圖右下角 Goal 頁面的極黑極簡美學) */
 :root {
-    --bg-main: #11120f;          /* 宇宙極客黑 */
-    --bg-card: #191b15;          /* 深炭黑卡片底色 */
-    --charcoal-dark: #edf4df;    /* 反轉：文字與主要邊框變成溫柔奶白色 */
-    --charcoal-muted: #8e9882;   /* 次要灰綠文字 */
-    --lime-accent: #a4d44d;      /* 經典石灰綠高亮不變 */
-    --lime-light: #22251e;       /* 深綠襯底欄位背景 */
+    --bg-main: #11120f;          
+    --bg-card: #191b15;          
+    --charcoal-dark: #edf4df;    
+    --charcoal-muted: #8e9882;   
+    --lime-accent: #a4d44d;      
+    --lime-light: #22251e;       
     
     --text-color: #edf4df;
     --text-inverse: #11120f;
@@ -26,25 +21,30 @@
     --color-pc: #1f93db;
 }
 
-/* 切換為：☀️ 淺色模式 (完全復刻參考圖整體的清爽酪梨綠美學) */
 body.light-theme {
-    --bg-main: #edf4df;          /* 經典溫柔酪梨綠底色 */
-    --bg-card: #ffffff;          /* 純白高對比卡片底色 */
-    --charcoal-dark: #191b15;    /* 墨黑文字與大邊框 */
-    --charcoal-muted: #6b735f;   /* 次要灰綠色 */
-    --lime-accent: #a4d44d;      /* 經典石灰綠 */
-    --lime-light: #f5f9ee;       /* 極淺綠襯底背景 */
+    --bg-main: #edf4df;          
+    --bg-card: #ffffff;          
+    --charcoal-dark: #191b15;    
+    --charcoal-muted: #6b735f;   
+    --lime-accent: #a4d44d;      
+    --lime-light: #f5f9ee;       
     
     --text-color: #191b15;
     --text-inverse: #ffffff;
     --border-color: #e0e9cf;
 }
 
-/* 全域基礎重設 */
 * {
     box-sizing: border-box; margin: 0; padding: 0;
     font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none;
+    user-select: none;
+}
+
+input, textarea, select {
+    -webkit-user-select: text !important;
+    user-select: text !important;
 }
 
 html, body {
@@ -64,103 +64,44 @@ body {
     transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* 頂部導航列 */
-.app-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 24px;
-    flex-shrink: 0;
-}
-.header-user-badge {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-}
-.header-user-badge .avatar {
-    width: 42px;
-    height: 42px;
-    background: var(--charcoal-dark);
-    color: var(--text-inverse);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.3rem;
-    transition: background-color 0.25s;
-}
+.auth-screen { flex-grow: 1; display: flex; align-items: center; justify-content: center; padding: 10px; }
+.auth-card { background-color: var(--bg-card); width: 100%; max-width: 400px; padding: 30px 24px; border-radius: 28px; border: 2px solid var(--border-color); box-shadow: 0 12px 36px rgba(0,0,0,0.15); text-align: center; transition: background-color 0.25s, border-color 0.25s; }
+.auth-logo { font-size: 3.2rem; margin-bottom: 12px; }
+#authTitle { font-size: 1.5rem; font-weight: 900; color: var(--charcoal-dark); margin-bottom: 6px; }
+.auth-subtitle { font-size: 0.8rem; color: var(--charcoal-muted); margin-bottom: 24px; line-height: 1.4; }
+.auth-toggle-box { margin-top: 20px; font-size: 0.88rem; color: var(--charcoal-muted); }
+#btnAuthToggle { background: none; border: none; color: var(--lime-accent); font-weight: 800; cursor: pointer; text-decoration: underline; margin-left: 4px; }
+
+.app-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-shrink: 0; }
+.header-user-badge { display: flex; align-items: center; gap: 10px; }
+.header-user-badge .avatar { width: 42px; height: 42px; background: var(--charcoal-dark); color: var(--text-inverse); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.3rem; }
 .header-user-badge .user-info { display: flex; flex-direction: column; }
 .header-user-badge .welcome { font-size: 0.75rem; color: var(--charcoal-muted); }
-.header-user-badge .username { font-size: 0.95rem; font-weight: 700; }
-.app-main-title {
-    font-size: 1.4rem;
-    font-weight: 900;
-    letter-spacing: -0.5px;
-    color: var(--charcoal-dark);
-    transition: color 0.25s;
-}
+.header-user-badge .username { font-size: 0.85rem; font-weight: 700; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.app-main-title { font-size: 1.4rem; font-weight: 900; letter-spacing: -0.5px; color: var(--charcoal-dark); }
 
-/* 全螢幕智慧 Loading 轉場 */
-#loadingOverlay {
-    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    background-color: var(--bg-main); z-index: 9999;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    transition: opacity 0.3s ease, visibility 0.3s;
-}
-.brand-logo-shape {
-    width: 70px; height: 70px; background: var(--charcoal-dark); color: var(--text-inverse);
-    border-radius: 24px; display: flex; align-items: center; justify-content: center;
-    font-size: 2.2rem; margin-bottom: 12px;
-}
+#loadingOverlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--bg-main); z-index: 9999; display: flex; flex-direction: column; justify-content: center; align-items: center; transition: opacity 0.3s ease, visibility 0.3s; }
+.brand-logo-shape { width: 70px; height: 70px; background: var(--charcoal-dark); color: var(--text-inverse); border-radius: 24px; display: flex; align-items: center; justify-content: center; font-size: 2.2rem; margin-bottom: 12px; }
 .loading-text { font-size: 1.3rem; font-weight: 900; color: var(--charcoal-dark); margin-bottom: 20px; }
 .loading-dots { display: flex; gap: 8px; }
-.loading-dot {
-    width: 12px; height: 12px; background-color: var(--lime-accent); border-radius: 50%;
-    animation: dotBounce 1.4s infinite ease-in-out both;
-}
+.loading-dot { width: 12px; height: 12px; background-color: var(--lime-accent); border-radius: 50%; animation: dotBounce 1.4s infinite ease-in-out both; }
 .loading-dot:nth-child(1) { animation-delay: -0.32s; }
 .loading-dot:nth-child(2) { animation-delay: -0.16s; }
-@keyframes dotBounce {
-    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
-    40% { transform: scale(1.2); opacity: 1; }
-}
+@keyframes dotBounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1.2); opacity: 1; } }
 
-/* 頂部切換膠囊列 */
 .segmented-control-container { width: 100%; margin-bottom: 18px; flex-shrink: 0; }
-.segmented-control {
-    display: flex;
-    background: rgba(128,128,128,0.12);
-    padding: 5px;
-    border-radius: 30px;
-    gap: 4px;
-}
-.segment-btn {
-    flex: 1; background: none; border: none; color: var(--charcoal-muted);
-    padding: 10px 0; font-size: 0.9rem; font-weight: 700; border-radius: 25px;
-    cursor: pointer; transition: all 0.2s ease;
-}
-.segment-btn.active {
-    background: var(--bg-card);
-    color: var(--charcoal-dark);
-}
+.segmented-control { display: flex; background: rgba(128,128,128,0.12); padding: 5px; border-radius: 30px; gap: 4px; }
+.segment-btn { flex: 1; background: none; border: none; color: var(--charcoal-muted); padding: 10px 0; font-size: 0.9rem; font-weight: 700; border-radius: 25px; cursor: pointer; transition: all 0.2s ease; }
+.segment-btn.active { background: var(--bg-card); color: var(--charcoal-dark); }
 
-/* 搜尋與模式切換 */
 .search-container { margin-bottom: 14px; width: 100%; flex-shrink: 0; }
-.search-container input {
-    width: 100%; padding: 14px 18px; background: var(--bg-card); border: 2px solid transparent;
-    border-radius: 40px; color: var(--text-color); font-size: 0.95rem; outline: none;
-    font-weight: 600; transition: border 0.2s, background-color 0.25s;
-}
+.search-container input { width: 100%; padding: 14px 18px; background: var(--bg-card); border: 2px solid transparent; border-radius: 40px; color: var(--text-color); font-size: 0.95rem; outline: none; font-weight: 600; transition: border 0.2s, background-color 0.25s; }
 .search-container input:focus { border-color: var(--charcoal-dark); }
 
 .view-toggle-container { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 16px; flex-shrink: 0; }
-.view-btn {
-    background: rgba(128,128,128,0.12); border: none; color: var(--charcoal-muted); padding: 8px 14px; font-size: 0.8rem;
-    font-weight: 700; border-radius: 12px; cursor: pointer; transition: all 0.2s;
-}
+.view-btn { background: rgba(128,128,128,0.12); border: none; color: var(--charcoal-muted); padding: 8px 14px; font-size: 0.8rem; font-weight: 700; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
 .view-btn.active { background: var(--charcoal-dark); color: var(--text-inverse); }
 
-/* 主畫面卡片架構 */
 .app-content-area { flex-grow: 1; display: flex; flex-direction: column; }
 #gameList { display: flex; flex-direction: column; gap: 14px; }
 #gameList.grid-view { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
@@ -168,47 +109,36 @@ body {
 .swipe-container { position: relative; width: 100%; overflow: hidden; border-radius: 24px; background-color: var(--danger-color); }
 #gameList.grid-view .swipe-container { background-color: transparent; border-radius: 0; }
 
-.game-row {
-    background-color: var(--bg-card); padding: 16px; display: flex; align-items: flex-start;
-    position: relative; z-index: 2; border-radius: 24px; transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s;
-}
-#gameList.grid-view .game-row { 
-    flex-direction: column; align-items: stretch; padding: 12px; height: 100%; 
-    transform: none !important; border: 2px solid var(--border-color);
-}
+.game-row { background-color: var(--bg-card); padding: 16px; display: flex; align-items: flex-start; position: relative; z-index: 2; border-radius: 24px; transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s; }
+#gameList.grid-view .game-row { flex-direction: column; align-items: stretch; padding: 12px; height: 100%; transform: none !important; border: 2px solid var(--border-color); }
 
-.swipe-action-btn {
-    position: absolute; top: 0; bottom: 0; width: 80px;
-    display: flex; flex-direction: column; justify-content: center; align-items: center;
-    color: white; font-weight: 800; font-size: 0.85rem; z-index: 1; cursor: pointer;
-}
-.swipe-action-btn.delete { left: 0; background-color: var(--danger-color); }
-.swipe-action-btn.edit { right: 0; background-color: #555555; }
+.swipe-action-btn { position: absolute; top: 0; bottom: 0; width: 80px; display: flex; flex-direction: column; justify-content: center; align-items: center; color: white; font-weight: 800; font-size: 0.85rem; z-index: 1; cursor: pointer; }
+.swipe-action-btn.delete { right: 0; left: auto; background-color: var(--danger-color); border-radius: 0 24px 24px 0; }
 
-.game-cover-wrapper {
-    width: 80px; height: 105px; border-radius: 16px; overflow: hidden; background: var(--lime-light);
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 16px;
-}
+.game-cover-wrapper { width: 80px; height: 105px; border-radius: 16px; overflow: hidden; background: var(--lime-light); display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-right: 16px; }
 #gameList.grid-view .game-cover-wrapper { width: 100%; height: 140px; margin-right: 0; margin-bottom: 10px; }
 .game-cover-img { width: 100%; height: 100%; object-fit: cover; }
 .game-cover-placeholder { font-size: 2rem; }
 
 .game-right-info { flex: 1; min-width: 0; }
 .game-row-title { font-size: 1.1rem; font-weight: 800; margin-bottom: 4px; color: var(--charcoal-dark); line-height: 1.3; }
-#gameList.grid-view .game-row-title { font-size: 0.95rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 2.4rem; margin-bottom: 6px; }
+
+/* 🚀 完美修正：整合標準與 webkit 的 line-clamp 語法，終結 VS Code 檢查錯誤 */
+#gameList.grid-view .game-row-title { 
+    font-size: 0.95rem; 
+    display: -webkit-box; 
+    -webkit-line-clamp: 2; 
+    line-clamp: 2; 
+    -webkit-box-orient: vertical; 
+    overflow: hidden; 
+    height: 2.4rem; 
+    margin-bottom: 6px; 
+}
 .game-row-date { font-size: 0.75rem; color: var(--charcoal-muted); margin-bottom: 10px; display: block; font-weight: 600; }
 
-/* 價格排版系統 */
 .game-row-prices-container { display: flex; flex-direction: column; gap: 6px; }
-.main-price-item {
-    display: flex; align-items: center; justify-content: space-between;
-    background: var(--lime-light); padding: 6px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600;
-    transition: background-color 0.25s;
-}
-.main-price-item.cheapest-row { 
-    background: var(--bg-card); 
-    border: 2px solid var(--charcoal-dark);
-}
+.main-price-item { display: flex; align-items: center; justify-content: space-between; background: var(--lime-light); padding: 6px 10px; border-radius: 12px; font-size: 0.85rem; font-weight: 600; }
+.main-price-item.cheapest-row { background: var(--bg-card); border: 2px solid var(--charcoal-dark); }
 
 .platform-badge { font-size: 0.65rem; font-weight: 800; padding: 3px 6px; border-radius: 20px; color: white; text-transform: uppercase; }
 .badge-switch { background-color: var(--color-switch); }
@@ -222,28 +152,18 @@ body {
 .price-num { color: var(--charcoal-dark); font-weight: 800; font-size: 0.95rem; }
 .price-num.is-cheapest { background: var(--lime-accent); color: #11120f; padding: 2px 8px; border-radius: 20px; font-weight: 900; }
 
-/* 系統設定頁面排版 */
 #settingsPage { display: none; flex-direction: column; gap: 16px; }
-.card-flat { background: var(--bg-card); border-radius: 24px; padding: 8px 18px; border: 2px solid var(--border-color); transition: background-color 0.25s, border-color 0.25s; }
+.card-flat { background: var(--bg-card); border-radius: 24px; padding: 8px 18px; border: 2px solid var(--border-color); }
 .settings-group-title { font-size: 0.85rem; color: var(--charcoal-muted); text-transform: uppercase; margin: 12px 0 6px 8px; font-weight: 800; }
 .settings-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0; border-bottom: 2px solid var(--border-color); }
 .settings-row:last-child { border-bottom: none; }
 .settings-label { font-size: 0.95rem; font-weight: 700; color: var(--charcoal-dark); }
 
-/* 底部操作控制列 */
 .bottom-action-bar { position: fixed; bottom: calc(16px + env(safe-area-inset-bottom)); left: 20px; right: 20px; z-index: 998; display: flex; justify-content: center; }
-#fabBtn {
-    width: 100%; max-width: 450px; background-color: var(--charcoal-dark); color: var(--text-inverse); border: none;
-    padding: 16px; border-radius: 40px; font-size: 1.05rem; font-weight: 800; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    transition: transform 0.1s, background-color 0.25s, color 0.25s;
-}
+#fabBtn { width: 100%; max-width: 450px; background-color: var(--charcoal-dark); color: var(--text-inverse); border: none; padding: 16px; border-radius: 40px; font-size: 1.05rem; font-weight: 800; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,0.2); transition: transform 0.1s, background-color 0.25s; }
 
-/* 彈窗與自訂虛擬鍵盤 */
 .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); justify-content: center; align-items: flex-end; z-index: 1000; }
-.modal-content { 
-    background-color: var(--bg-card); width: 100%; max-width: 500px; border-radius: 32px 32px 0 0; 
-    padding: 24px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); height: 92vh; display: flex; flex-direction: column; position: relative;
-}
+.modal-content { background-color: var(--bg-card); width: 100%; max-width: 500px; border-radius: 32px 32px 0 0; padding: 24px; padding-bottom: calc(24px + env(safe-area-inset-bottom)); height: 92vh; display: flex; flex-direction: column; position: relative; }
 .form-btns-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
 .btn-text { background: none; border: none; font-size: 1rem; font-weight: 800; cursor: pointer; padding: 6px 12px; }
 .btn-text.cancel { color: var(--charcoal-muted); }
@@ -257,15 +177,16 @@ body {
 .edit-price-row { display: flex; gap: 6px; align-items: center; background: var(--lime-light); padding: 8px; border-radius: 16px; margin-bottom: 8px; border: 2px solid transparent; }
 .edit-price-row.active-row { border-color: var(--charcoal-dark); background: var(--bg-card); }
 
+.btn-toggle-condition { padding: 10px 16px; border: none; border-radius: 10px; font-size: 0.9rem; font-weight: 800; color: white; cursor: pointer; min-width: 70px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); transition: transform 0.1s; }
+.btn-toggle-condition:active { transform: scale(0.95); }
+.toggle-new { background-color: var(--lime-accent) !important; color: #11120f !important; }
+.toggle-used { background-color: var(--warning-color) !important; color: white !important; }
+
 .action-pill-btn { padding: 8px 16px; border: none; border-radius: 20px; font-weight: 800; font-size: 0.85rem; color: white; cursor: pointer; }
 .action-pill-btn.accent { background-color: var(--charcoal-dark); color: var(--text-inverse); }
 .action-pill-btn.warning { background-color: var(--warning-color); }
 
-.custom-keyboard { 
-    background: #11120f; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); 
-    display: none; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 8px; 
-    z-index: 1100; position: absolute; bottom: 0; left: 0; width: 100%;
-}
+.custom-keyboard { background: #11120f; padding: 16px; padding-bottom: calc(16px + env(safe-area-inset-bottom)); display: none; grid-template-columns: repeat(3, 1fr) 1.2fr; gap: 8px; z-index: 1100; position: absolute; bottom: 0; left: 0; width: 100%; }
 .key { background: rgba(255,255,255,0.08); color: white; border: none; border-radius: 16px; padding: 14px 0; font-size: 1.4rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; }
 .key.action-key { background: rgba(255,255,255,0.04); font-size: 1rem; color: var(--lime-accent); }
 .key.delete-key { color: var(--danger-color); }
