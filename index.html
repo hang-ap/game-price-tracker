@@ -2,8 +2,8 @@
 <html lang="zh-Hant-HK">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (極簡扁平版)</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>香港 Game 價紀錄器 (Firebase + 訪客雙模版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -25,67 +25,101 @@
         </div>
     </div>
 
-    <header class="app-header">
-        <div class="header-user-badge">
-            <div class="avatar">🎮</div>
-            <div class="user-info">
-                <span class="welcome">Welcome Back</span>
-                <span class="username">Game Master</span>
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <div class="auth-logo">🎮</div>
+            <h2 id="authTitle">登入你的帳戶</h2>
+            <p class="auth-subtitle">登入以同步雲端數據，或使用免註冊訪客模式</p>
+            
+            <div class="form-group">
+                <label>電郵地址 (Email)</label>
+                <input type="email" id="authEmail" placeholder="example@domain.com">
             </div>
-        </div>
-        <h1 class="app-main-title">GAME PRICE</h1>
-    </header>
-
-    <div class="segmented-control-container">
-        <div class="segmented-control">
-            <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">格價中</button>
-            <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">已購入</button>
-            <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">系統設定</button>
+            <div class="form-group">
+                <label>帳戶密碼 (Password)</label>
+                <input type="password" id="authPassword" placeholder="輸入最少 6 位密碼">
+            </div>
+            
+            <button type="button" class="btn-main-submit" id="btnAuthMain" onclick="handleAuthAction()">🔓 驗證並登入帳戶</button>
+            
+            <button type="button" class="btn-main-submit" id="btnGuestMode" style="background-color: var(--charcoal-dark); color: var(--text-inverse); margin-top: 10px;" onclick="handleGuestMode()">👤 離線訪客模式 (LocalStorage)</button>
+            
+            <div class="auth-toggle-box">
+                <span id="authToggleText">未有帳戶？</span>
+                <button type="button" id="btnAuthToggle" onclick="toggleAuthMode()">立即註冊新帳戶</button>
+            </div>
         </div>
     </div>
 
-    <div class="search-container" id="searchContainer">
-        <input type="text" id="searchBar" placeholder="🔍 搜尋遊戲名稱..." oninput="renderGames()">
-    </div>
-
-    <div class="view-toggle-container" id="viewToggleArea">
-        <button class="view-btn" id="btnListView" onclick="setViewMode('list')">☰ 條列模式</button>
-        <button class="view-btn" id="btnGridView" onclick="setViewMode('grid')">🎴 網格圖鑑</button>
-    </div>
-
-    <main class="app-content-area">
-        <div id="gameList"></div>
-        <div id="emptyTips" class="empty-tips">
-            <div class="empty-icon">📭</div>
-            <p>未有任何紀錄</p>
-            <span>撳右下角加號按鈕開始格價啦！</span>
-        </div>
-
-        <div id="settingsPage">
-            <div class="settings-group-title">系統顯示模式</div>
-            <div class="settings-group card-flat">
-                <div class="settings-row">
-                    <span class="settings-label">深淺色主題切換</span>
-                    <button class="view-btn active" id="themeToggleBtn" onclick="toggleTheme()">🌙 Dark Mode</button>
+    <div id="appContainer" style="display: none;">
+        
+        <header class="app-header">
+            <div class="header-user-badge">
+                <div class="avatar" id="userAvatarIcon">👤</div>
+                <div class="user-info">
+                    <span class="welcome" id="userStatusLabel">Logged In As</span>
+                    <span class="username" id="displayUserEmail">User</span>
                 </div>
             </div>
+            <h1 class="app-main-title">GAME PRICE</h1>
+        </header>
 
-            <div class="settings-group-title">數據安全防護</div>
-            <div class="settings-group card-flat">
-                <div class="settings-row">
-                    <span class="settings-label">備份當前本地數據</span>
-                    <button class="action-pill-btn accent" onclick="openBackupModal()">💾 匯出備份</button>
-                </div>
-                <div class="settings-row">
-                    <span class="settings-label">導入備份還原名單</span>
-                    <button class="action-pill-btn warning" onclick="openRestoreModal()">🔄 匯入還原</button>
-                </div>
+        <div class="segmented-control-container">
+            <div class="segmented-control">
+                <button class="segment-btn active" id="btnTabPrice" onclick="switchTab('price')">格價中</button>
+                <button class="segment-btn" id="btnTabBought" onclick="switchTab('bought')">已購入</button>
+                <button class="segment-btn" id="btnTabSettings" onclick="switchTab('settings')">系統設定</button>
             </div>
         </div>
-    </main>
 
-    <div class="bottom-action-bar" id="bottomActionBar">
-        <button id="fabBtn" onclick="openAddModal()">＋ Add New Record</button>
+        <div class="search-container" id="searchContainer">
+            <input type="text" id="searchBar" placeholder="🔍 搜尋遊戲名稱..." oninput="renderGames()">
+        </div>
+
+        <div class="view-toggle-container" id="viewToggleArea">
+            <button class="view-btn" id="btnListView" onclick="setViewMode('list')">☰ 條列模式</button>
+            <button class="view-btn" id="btnGridView" onclick="setViewMode('grid')">🎴 網格圖鑑</button>
+        </div>
+
+        <main class="app-content-area">
+            <div id="gameList"></div>
+            <div id="emptyTips" class="empty-tips">
+                <div class="empty-icon">📭</div>
+                <p>未有任何紀錄</p>
+                <span>撳右下角加號按鈕開始格價啦！</span>
+            </div>
+
+            <div id="settingsPage">
+                <div class="settings-group-title">系統顯示模式</div>
+                <div class="settings-group card-flat">
+                    <div class="settings-row">
+                        <span class="settings-label">深淺色主題切換</span>
+                        <button class="view-btn active" id="themeToggleBtn" onclick="toggleTheme()">切換主題</button>
+                    </div>
+                </div>
+
+                <div class="settings-group-title">帳戶與安全管理</div>
+                <div class="settings-group card-flat">
+                    <div class="settings-row">
+                        <span class="settings-label" id="logoutLabel">退出目前的登入狀態</span>
+                        <button class="action-pill-btn warning" style="background-color: var(--danger-color);" onclick="handleLogout()">🚪 安全登出</button>
+                    </div>
+                </div>
+
+                <div class="settings-group-title">數據本地快照防護 (唯讀)</div>
+                <div class="settings-group card-flat">
+                    <div class="settings-row">
+                        <span class="settings-label">導出雲端/本地快照備份</span>
+                        <button class="action-pill-btn accent" onclick="openBackupModal()">💾 匯出備份</button>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <div class="bottom-action-bar" id="bottomActionBar">
+            <button id="fabBtn" onclick="openAddModal()">＋ Add New Record</button>
+        </div>
+
     </div>
 
     <div id="gameModal" class="modal">
@@ -156,17 +190,16 @@
         <div class="modal-content" style="height: auto; max-height: 85vh;">
             <div class="form-btns-top">
                 <span style="width:50px;"></span>
-                <h3 id="backupModalTitle">數據防護安全中心</h3>
+                <h3 id="backupModalTitle">數據快照保護</h3>
                 <button type="button" class="btn-text cancel" onclick="closeBackupModal()">關閉</button>
             </div>
             <div style="padding-bottom:20px;">
-                <textarea id="backupTextarea" placeholder="備庫字串區域..."></textarea>
-                <button type="button" id="btnCopyBackup" class="btn-main-submit" onclick="copyBackupData()">📋 一鍵複製數據字串</button>
-                <button type="button" id="btnConfirmRestore" class="btn-main-submit" style="background-color:var(--danger-color);" onclick="confirmRestoreData()">⚠️ 確認導入覆蓋數據</button>
+                <textarea id="backupTextarea" placeholder="備庫字串區域..." readonly></textarea>
+                <button type="button" id="btnCopyBackup" class="btn-main-submit" onclick="copyBackupData()">📋 一鍵複製快照數據</button>
             </div>
         </div>
     </div>
 
-    <script src="app.js?v=1.0"></script>
+    <script type="module" src="app.js?v=1.0"></script>
 </body>
 </html>
