@@ -1,5 +1,5 @@
 /**
- * 🚀 香港 Game 價紀錄器 - Firebase + 訪客獨立沙盒模組化引擎 (v10+ 穩定快載版)
+ * 🚀 香港 Game 價紀錄器 - Firebase + 訪客獨立沙盒模組化引擎 (預設訪客流線版)
  */
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
@@ -36,8 +36,8 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🚀 核心控制旗標：追蹤當前是否為「離線訪客模式」
-let isGuestMode = false;     
+// 🚀 核心控制：初始化預設開啟為 離線訪客模式
+let isGuestMode = true;     
 
 let games = [];              
 let currentUser = null;      
@@ -66,65 +66,80 @@ function formatDate(timestamp) {
     return `📅 Last Update: ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-// Firebase 狀態核心監聽器
+// 🚀 改版重點：Firebase Auth 狀態核心分流器
 onAuthStateChanged(auth, (user) => {
-    // 🚀 安全阻斷器：如果使用者主動選擇了訪客模式，不允許 Firebase 自動覆蓋狀態
-    if (isGuestMode) return;
-
-    const authScreen = document.getElementById('authScreen');
-    const appContainer = document.getElementById('appContainer');
     const displayEmail = document.getElementById('displayUserEmail');
     const userAvatar = document.getElementById('userAvatarIcon');
     const statusLabel = document.getElementById('userStatusLabel');
     const logoutLabel = document.getElementById('logoutLabel');
+    const settingsAuthBtn = document.getElementById('settingsAuthBtn');
 
     if (user) {
+        // A. 偵測到用戶曾登入過（後台自動重連，切換至雲端沙盒模式）
         currentUser = user;
         isGuestMode = false;
-        if (displayEmail) displayEmail.innerText = user.email;
-        if (userAvatar) userAvatar.innerText = "👤";
-        if (statusLabel) statusLabel.innerText = "Logged In As";
-        if (logoutLabel) logoutLabel.innerText = "退出目前的雲端登入狀態";
         
-        if (authScreen) authScreen.style.display = 'none';
-        if (appContainer) appContainer.style.display = 'block';
+        if (displayEmail) displayEmail.innerText = user.email;
+        if (userAvatar) userAvatar.innerText = "☁️"; // 雲端同步標記
+        if (statusLabel) statusLabel.innerText = "Cloud Sync Active";
+        if (logoutLabel) logoutLabel.innerText = "退出目前的雲端帳戶";
+        if (settingsAuthBtn) {
+            settingsAuthBtn.innerText = "🚪 安全登出";
+            settingsAuthBtn.style.backgroundColor = "var(--danger-color)";
+        }
+        
+        closeAuthModal();
         startFirestoreListener(user.uid);
     } else {
+        // B. 無雲端驗證紀錄（完美降級，自動秒速對接本地訪客模式）
         currentUser = null;
+        isGuestMode = true;
         if (unsubscribeFirestore) { unsubscribeFirestore(); unsubscribeFirestore = null; }
-        games = [];
-        if (appContainer) appContainer.style.display = 'none';
-        if (authScreen) authScreen.style.display = 'flex';
-        hideLoadingOverlay(); 
+
+        if (displayEmail) displayEmail.innerText = "點擊頭像登入雲端";
+        if (userAvatar) userAvatar.innerText = "👤";
+        if (statusLabel) statusLabel.innerText = "離線訪客模式";
+        if (logoutLabel) logoutLabel.innerText = "目前為離線單機運作狀態";
+        if (settingsAuthBtn) {
+            settingsAuthBtn.innerText = "🔐 前往登入";
+            settingsAuthBtn.style.backgroundColor = "var(--warning-color)";
+        }
+
+        // 直接讀取本地快照數據
+        games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || [];
+        renderGames();
+        hideLoadingOverlay();
     }
 });
 
-// 🚀 [新設] 訪客模式激活入口
-function handleGuestMode() {
-    isGuestMode = true;
-    currentUser = null;
-    if (unsubscribeFirestore) { unsubscribeFirestore(); unsubscribeFirestore = null; }
+// 🚀 [新設] 處理頂部頭像的點擊動作
+function handleAvatarClick() {
+    if (isGuestMode) {
+        // 如果目前是訪客，直接打開登入選單
+        openAuthModal();
+    } else {
+        // 如果已經登入了，提示是否要登出
+        if (confirm(`目前已登入：${currentUser.email}\n是否需要安全登出？`)) {
+            handleLogout();
+        }
+    }
+}
 
-    const authScreen = document.getElementById('authScreen');
-    const appContainer = document.getElementById('appContainer');
-    const displayEmail = document.getElementById('displayUserEmail');
-    const userAvatar = document.getElementById('userAvatarIcon');
-    const statusLabel = document.getElementById('userStatusLabel');
-    const logoutLabel = document.getElementById('logoutLabel');
+// 🚀 [新設] 處理設定頁面按鈕的點擊動作
+function handleSettingsAuthAction() {
+    if (isGuestMode) {
+        openAuthModal();
+    } else {
+        handleLogout();
+    }
+}
 
-    // UI 轉向提示為本地單機版
-    if (displayEmail) displayEmail.innerText = "Offline Guest User";
-    if (userAvatar) userAvatar.innerText = "🤖";
-    if (statusLabel) statusLabel.innerText = "Current Mode";
-    if (logoutLabel) logoutLabel.innerText = "退出並清除目前訪客緩存視窗";
-
-    if (authScreen) authScreen.style.display = 'none';
-    if (appContainer) appContainer.style.display = 'block';
-
-    // 🚀 直接從 LocalStorage 讀取數據快照
-    games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || [];
-    renderGames();
-    hideLoadingOverlay();
+// 🚀 控制登入註冊彈窗的打開與關閉
+function openAuthModal() {
+    document.getElementById('authModal').style.display = 'flex';
+}
+function closeAuthModal() {
+    document.getElementById('authModal').style.display = 'none';
 }
 
 function startFirestoreListener(uid) {
@@ -163,7 +178,6 @@ async function handleAuthAction() {
     if (loader) { loader.style.visibility = 'visible'; loader.style.opacity = '1'; }
 
     try {
-        isGuestMode = false; // 強制解除訪客模式標記
         if (isSignUpMode) {
             await createUserWithEmailAndPassword(auth, email, password);
             alert('🎉 帳戶註冊成功並已自動登入！');
@@ -197,37 +211,23 @@ function toggleAuthMode() {
     }
 }
 
-// 🚀 安全登出 / 退出訪客模式分流處理器
 async function handleLogout() {
-    const msg = isGuestMode ? '確定要關閉訪客模式並返回登入主頁嗎？' : '確定要安全登出當前帳戶嗎？';
-    if (confirm(msg)) {
-        if (isGuestMode) {
-            // A. 清空訪客局部狀態
-            isGuestMode = false;
-            games = [];
-            const appContainer = document.getElementById('appContainer');
-            const authScreen = document.getElementById('authScreen');
-            if (appContainer) appContainer.style.display = 'none';
-            if (authScreen) authScreen.style.display = 'flex';
-            renderGames();
-        } else {
-            // B. 走雲端登出
-            try {
-                await signOut(auth);
-            } catch (error) {
-                alert('登出失敗！');
-            }
-        }
+    try {
+        const loader = document.getElementById('loadingOverlay');
+        if (loader) { loader.style.visibility = 'visible'; loader.style.opacity = '1'; }
+        await signOut(auth);
+    } catch (error) {
+        alert('登出失敗！');
     }
 }
 
 function translateAuthError(code) {
     switch (code) {
-        case 'auth/invalid-credential': return '電郵或密碼不正確，請重新檢查。';
-        case 'auth/email-already-in-use': return '此電郵已被其他帳戶註冊使用。';
-        case 'auth/invalid-email': return '請輸入正確格式的電郵地址。';
+        case 'auth/invalid-credential': return '電郵或密碼不正確。';
+        case 'auth/email-already-in-use': return '此電郵已被註冊。';
+        case 'auth/invalid-email': return '電郵地址格式錯誤。';
         case 'auth/weak-password': return '密碼安全強度太弱。';
-        default: return '伺服器連線異常，請稍後再試。';
+        default: return '系統連線異常，請稍後再試。';
     }
 }
 
@@ -252,7 +252,9 @@ function renderGames() {
         swipeContainer.className = 'swipe-container';
         swipeContainer.id = `swipe_id_${game.id}`;
 
+        // 🚀 雙向滑動：加入右滑變更狀態按鈕
         const actionBtnHtml = `
+            <div class="swipe-action-btn bought" onclick="event.stopPropagation(); toggleBoughtDirect('${game.id}')">${game.isBought ? '🔍 格價中' : '📦 已購入'}</div>
             <div class="swipe-action-btn delete" onclick="event.stopPropagation(); deleteGameDirect('${game.id}')">🗑️ 刪除</div>
         `;
 
@@ -401,11 +403,15 @@ function handleTouchMove(e, docId) {
     if (!row) return;
 
     if (diffX > 0) {
+        // 👈 左滑 (顯示刪除)
         const moveX = Math.min(diffX, 80);
         row.style.transform = `translateX(-${moveX}px)`;
         e.preventDefault(); 
     } else {
-        row.style.transform = 'translateX(0px)';
+        // 👉 右滑 (顯示已購入狀態切換)
+        const moveX = Math.min(Math.abs(diffX), 80);
+        row.style.transform = `translateX(${moveX}px)`;
+        e.preventDefault();
     }
 }
 
@@ -419,15 +425,60 @@ function handleTouchEnd(e, docId) {
     const diffX = touchStartX - currentX;
 
     if (isSwiping && diffX > 45) {
+        // 👈 確定左滑落點
         row.style.transform = 'translateX(-80px)';
         activeSwipeContainer = container;
         blockClickUntil = Date.now() + 100; 
+    } else if (isSwiping && diffX < -45) {
+        // 👉 確定右滑落點
+        row.style.transform = 'translateX(80px)';
+        activeSwipeContainer = container;
+        blockClickUntil = Date.now() + 100;
     } else {
         row.style.transform = 'translateX(0px)';
         activeSwipeContainer = null;
         if (isSwiping) blockClickUntil = Date.now() + 100; 
     }
     touchStartX = 0; touchStartY = 0; isSwiping = false;
+}
+
+// 🚀 [新設] 透過右滑手勢直接快速切換格價與已購入狀態
+async function toggleBoughtDirect(docId) {
+    const game = games.find(g => g.id === docId);
+    if (!game) return;
+
+    const newStatus = !game.isBought;
+    const dataPayload = {
+        isBought: newStatus,
+        date: Date.now()
+    };
+
+    if (isGuestMode) {
+        const idx = games.findIndex(g => g.id === docId);
+        if (idx !== -1) {
+            games[idx].isBought = newStatus;
+            games[idx].date = dataPayload.date;
+        }
+        localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
+        renderGames();
+        activeSwipeContainer = null;
+        return;
+    }
+
+    if (!currentUser) return;
+    const loader = document.getElementById('loadingOverlay');
+    if (loader) { loader.style.visibility = 'visible'; loader.style.opacity = '1'; }
+
+    try {
+        const ref = doc(db, "users", currentUser.uid, "games", docId);
+        await updateDoc(ref, dataPayload);
+    } catch (error) {
+        console.error(error);
+        alert('狀態變更失敗！');
+    } finally {
+        if (loader) { loader.style.opacity = '0'; setTimeout(() => { loader.style.visibility = 'hidden'; }, 300); }
+    }
+    activeSwipeContainer = null;
 }
 
 function openEditModal(docId) {
@@ -463,7 +514,6 @@ function openEditModal(docId) {
     hideCustomKeyboard(); 
 }
 
-// 🚀 表單修改儲存控制器 (新增自適應雙分流：Guest 寫入 LocalStorage vs Auth 寫入 Firestore)
 async function handleFormSubmit() {
     const name = document.getElementById('gName').value.trim();
     if (!name) { alert('請輸入有效遊戲名稱！'); return; }
@@ -490,10 +540,8 @@ async function handleFormSubmit() {
         prices: pricesData
     };
 
-    // A. 訪客模式分流處理 (寫入本地儲存)
     if (isGuestMode) {
         if (docId === "") {
-            // 生成一個高質量的本地唯一客製 id 字串
             const localId = 'local_' + Date.now() + Math.random().toString(36).substr(2, 5);
             games.push({ id: localId, ...dataPayload });
         } else {
@@ -505,7 +553,6 @@ async function handleFormSubmit() {
         return;
     }
 
-    // B. 雲端驗證分流處理
     if (!currentUser) return;
     const loader = document.getElementById('loadingOverlay');
     if (loader) { loader.style.visibility = 'visible'; loader.style.opacity = '1'; }
@@ -526,13 +573,11 @@ async function handleFormSubmit() {
     }
 }
 
-// 🚀 刪除處理器 (分流：Guest 移除 LocalStorage 條目 vs Auth 移除 Firestore 條目)
 async function deleteGameDirect(docId) {
     const game = games.find(g => g.id === docId);
     const gameName = game ? game.name : "此遊戲";
 
     if (confirm(`確定要永久移除 "${gameName}" 嗎？`)) {
-        // A. 訪客離線刪除
         if (isGuestMode) {
             games = games.filter(g => g.id !== docId);
             localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
@@ -541,7 +586,6 @@ async function deleteGameDirect(docId) {
             return;
         }
 
-        // B. 雲端同步刪除
         if (!currentUser) return;
         const loader = document.getElementById('loadingOverlay');
         if (loader) { loader.style.visibility = 'visible'; loader.style.opacity = '1'; }
@@ -708,9 +752,13 @@ if (document.readyState === 'loading') {
     startAppInitialization();
 }
 
-// 全域模組橋接器
+// 🚀 全域安全橋接器 (加設頭像點擊與設定頁登入分流)
+window.handleAvatarClick = handleAvatarClick;
+window.handleSettingsAuthAction = handleSettingsAuthAction;
+window.openAuthModal = openAuthModal;
+window.closeAuthModal = closeAuthModal;
+
 window.handleAuthAction = handleAuthAction;
-window.handleGuestMode = handleGuestMode; // 🚀 注入訪客模式到全域
 window.toggleAuthMode = toggleAuthMode;
 window.handleLogout = handleLogout;
 window.switchTab = switchTab;
@@ -731,3 +779,4 @@ window.openBackupModal = openBackupModal;
 window.closeBackupModal = closeBackupModal;
 window.copyBackupData = copyBackupData;
 window.updateScraperLinks = updateScraperLinks;
+window.toggleBoughtDirect = toggleBoughtDirect; // 🚀 注入全域橋接

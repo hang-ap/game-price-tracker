@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>香港 Game 價紀錄器 (Firebase + 訪客雙模版)</title>
+    <title>香港 Game 價紀錄器 (訪客預設版)</title>
     
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="icon-192.png">
@@ -25,40 +25,14 @@
         </div>
     </div>
 
-    <div id="authScreen" class="auth-screen">
-        <div class="auth-card">
-            <div class="auth-logo">🎮</div>
-            <h2 id="authTitle">登入你的帳戶</h2>
-            <p class="auth-subtitle">登入以同步雲端數據，或使用免註冊訪客模式</p>
-            
-            <div class="form-group">
-                <label>電郵地址 (Email)</label>
-                <input type="email" id="authEmail" placeholder="example@domain.com">
-            </div>
-            <div class="form-group">
-                <label>帳戶密碼 (Password)</label>
-                <input type="password" id="authPassword" placeholder="輸入最少 6 位密碼">
-            </div>
-            
-            <button type="button" class="btn-main-submit" id="btnAuthMain" onclick="handleAuthAction()">🔓 驗證並登入帳戶</button>
-            
-            <button type="button" class="btn-main-submit" id="btnGuestMode" style="background-color: var(--charcoal-dark); color: var(--text-inverse); margin-top: 10px;" onclick="handleGuestMode()">👤 離線訪客模式 (LocalStorage)</button>
-            
-            <div class="auth-toggle-box">
-                <span id="authToggleText">未有帳戶？</span>
-                <button type="button" id="btnAuthToggle" onclick="toggleAuthMode()">立即註冊新帳戶</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="appContainer" style="display: none;">
+    <div id="appContainer">
         
         <header class="app-header">
-            <div class="header-user-badge">
+            <div class="header-user-badge" onclick="handleAvatarClick()">
                 <div class="avatar" id="userAvatarIcon">👤</div>
                 <div class="user-info">
-                    <span class="welcome" id="userStatusLabel">Logged In As</span>
-                    <span class="username" id="displayUserEmail">User</span>
+                    <span class="welcome" id="userStatusLabel">離線訪客模式</span>
+                    <span class="username" id="displayUserEmail">點擊頭像登入雲端</span>
                 </div>
             </div>
             <h1 class="app-main-title">GAME PRICE</h1>
@@ -98,18 +72,18 @@
                     </div>
                 </div>
 
-                <div class="settings-group-title">帳戶與安全管理</div>
+                <div class="settings-group-title">帳戶雲端同步備份</div>
                 <div class="settings-group card-flat">
                     <div class="settings-row">
-                        <span class="settings-label" id="logoutLabel">退出目前的登入狀態</span>
-                        <button class="action-pill-btn warning" style="background-color: var(--danger-color);" onclick="handleLogout()">🚪 安全登出</button>
+                        <span class="settings-label" id="logoutLabel">儲存與同步數據至 Firebase</span>
+                        <button class="action-pill-btn warning" id="settingsAuthBtn" onclick="handleSettingsAuthAction()">🔐 前往登入</button>
                     </div>
                 </div>
 
                 <div class="settings-group-title">數據本地快照防護 (唯讀)</div>
                 <div class="settings-group card-flat">
                     <div class="settings-row">
-                        <span class="settings-label">導出雲端/本地快照備份</span>
+                        <span class="settings-label">導出當前模式快照備份</span>
                         <button class="action-pill-btn accent" onclick="openBackupModal()">💾 匯出備份</button>
                     </div>
                 </div>
@@ -120,6 +94,36 @@
             <button id="fabBtn" onclick="openAddModal()">＋ Add New Record</button>
         </div>
 
+    </div>
+
+    <div id="authModal" class="modal">
+        <div class="modal-content" style="height: auto; max-height: 85vh;">
+            <div class="form-btns-top">
+                <button type="button" class="btn-text cancel" onclick="closeAuthModal()">取消</button>
+                <h3 id="authTitle">登入你的帳戶</h3>
+                <span style="width:50px;"></span>
+            </div>
+            
+            <div style="padding-bottom: 24px; text-align: center;">
+                <p class="auth-subtitle">登入後將開啟雲端沙盒同步，與本地 Guest 數據相互獨立隔離</p>
+                
+                <div class="form-group" style="text-align: left;">
+                    <label>電郵地址 (Email)</label>
+                    <input type="email" id="authEmail" placeholder="example@domain.com">
+                </div>
+                <div class="form-group" style="text-align: left;">
+                    <label>帳戶密碼 (Password)</label>
+                    <input type="password" id="authPassword" placeholder="輸入最少 6 位密碼">
+                </div>
+                
+                <button type="button" class="btn-main-submit" id="btnAuthMain" onclick="handleAuthAction()">🔓 驗證並登入帳戶</button>
+                
+                <div class="auth-toggle-box">
+                    <span id="authToggleText">未有帳戶？</span>
+                    <button type="button" id="btnAuthToggle" onclick="toggleAuthMode()">立即註冊新帳戶</button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div id="gameModal" class="modal">
@@ -133,6 +137,8 @@
             <form id="gameForm" onsubmit="event.preventDefault();">
                 <div class="modal-body" id="modalBody">
                     <input type="hidden" id="editIndex" value="">
+                    
+                    <input type="hidden" id="gIsBought" value="false">
 
                     <div class="form-group">
                         <label>遊戲名稱</label>
@@ -145,14 +151,6 @@
                     <div class="form-group">
                         <label>封面圖片網址 (可留空)</label>
                         <input type="url" id="gCover" placeholder="https://example.com/image.png" onfocus="hideCustomKeyboard()">
-                    </div>
-
-                    <div class="form-group">
-                        <label>庫存狀態標記</label>
-                        <select id="gIsBought" onfocus="hideCustomKeyboard()">
-                            <option value="false">🔍 格價中 (未購入)</option>
-                            <option value="true">📦 已買在庫 (已收藏)</option>
-                        </select>
                     </div>
                     
                     <div class="form-group">
