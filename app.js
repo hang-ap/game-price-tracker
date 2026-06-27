@@ -36,7 +36,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
-// 🚀 核心控制：初始化預設開啟為 離線訪客模式
+// 核心控制：初始化預設開啟為 離線訪客模式
 let isGuestMode = true;     
 
 let games = [];              
@@ -48,12 +48,14 @@ let currentTab = 'price';
 let currentViewMode = localStorage.getItem('hk_game_view_mode') || 'list'; 
 let currentTheme = localStorage.getItem('hk_game_theme') || 'dark';
 
-let currentActivePriceInput = null;
-let touchStartX = 0;
-let touchStartY = 0;
-let isSwiping = false;
+// 滑動與輕觸追蹤變數
+let startX = 0;
+let startY = 0;
+let isTracking = false;
+let hasMoved = false;
 let blockClickUntil = 0; 
 let activeSwipeContainer = null;
+let currentActivePriceInput = null;
 
 (function() {
     const savedTheme = localStorage.getItem('hk_game_theme') || 'dark';
@@ -66,7 +68,7 @@ function formatDate(timestamp) {
     return `📅 Last Update: ${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
-// 🚀 改版重點：Firebase Auth 狀態核心分流器
+// 🚀 Firebase Auth 狀態核心分流器
 onAuthStateChanged(auth, (user) => {
     const displayEmail = document.getElementById('displayUserEmail');
     const userAvatar = document.getElementById('userAvatarIcon');
@@ -75,12 +77,11 @@ onAuthStateChanged(auth, (user) => {
     const settingsAuthBtn = document.getElementById('settingsAuthBtn');
 
     if (user) {
-        // A. 偵測到用戶曾登入過（後台自動重連，切換至雲端沙盒模式）
         currentUser = user;
         isGuestMode = false;
         
         if (displayEmail) displayEmail.innerText = user.email;
-        if (userAvatar) userAvatar.innerText = "☁️"; // 雲端同步標記
+        if (userAvatar) userAvatar.innerText = "☁️"; 
         if (statusLabel) statusLabel.innerText = "Cloud Sync Active";
         if (logoutLabel) logoutLabel.innerText = "退出目前的雲端帳戶";
         if (settingsAuthBtn) {
@@ -91,7 +92,6 @@ onAuthStateChanged(auth, (user) => {
         closeAuthModal();
         startFirestoreListener(user.uid);
     } else {
-        // B. 無雲端驗證紀錄（完美降級，自動秒速對接本地訪客模式）
         currentUser = null;
         isGuestMode = true;
         if (unsubscribeFirestore) { unsubscribeFirestore(); unsubscribeFirestore = null; }
@@ -105,27 +105,31 @@ onAuthStateChanged(auth, (user) => {
             settingsAuthBtn.style.backgroundColor = "var(--warning-color)";
         }
 
-        // 直接讀取本地快照數據
-        games = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || [];
+        // 🚀 【核心修復】自動修復數據庫：強制清洗並補強所有無 ID 或 ID 毀損的舊範本項目
+        let rawLocalData = JSON.parse(localStorage.getItem('hk_game_prices_v5')) || [];
+        games = rawLocalData.map((game, index) => {
+            if (!game.id || game.id === "undefined" || game.id === "null") {
+                game.id = 'healed_' + Date.now() + '_' + index + '_' + Math.random().toString(36).substr(2, 5);
+            }
+            return game;
+        });
+        localStorage.setItem('hk_game_prices_v5', JSON.stringify(games));
+
         renderGames();
         hideLoadingOverlay();
     }
 });
 
-// 🚀 [新設] 處理頂部頭像的點擊動作
 function handleAvatarClick() {
     if (isGuestMode) {
-        // 如果目前是訪客，直接打開登入選單
         openAuthModal();
     } else {
-        // 如果已經登入了，提示是否要登出
         if (confirm(`目前已登入：${currentUser.email}\n是否需要安全登出？`)) {
             handleLogout();
         }
     }
 }
 
-// 🚀 [新設] 處理設定頁面按鈕的點擊動作
 function handleSettingsAuthAction() {
     if (isGuestMode) {
         openAuthModal();
@@ -134,13 +138,8 @@ function handleSettingsAuthAction() {
     }
 }
 
-// 🚀 控制登入註冊彈窗的打開與關閉
-function openAuthModal() {
-    document.getElementById('authModal').style.display = 'flex';
-}
-function closeAuthModal() {
-    document.getElementById('authModal').style.display = 'none';
-}
+function openAuthModal() { document.getElementById('authModal').style.display = 'flex'; }
+function closeAuthModal() { document.getElementById('authModal').style.display = 'none'; }
 
 function startFirestoreListener(uid) {
     const gamesCollectionRef = collection(db, "users", uid, "games");
@@ -252,10 +251,9 @@ function renderGames() {
         swipeContainer.className = 'swipe-container';
         swipeContainer.id = `swipe_id_${game.id}`;
 
-        // 🚀 雙向滑動：加入右滑變更狀態按鈕
         const actionBtnHtml = `
-            <div class="swipe-action-btn bought" onclick="event.stopPropagation(); toggleBoughtDirect('${game.id}')">${game.isBought ? '🔍 格價中' : '📦 已購入'}</div>
-            <div class="swipe-action-btn delete" onclick="event.stopPropagation(); deleteGameDirect('${game.id}')">🗑️ 刪除</div>
+            <div class="swipe-action-btn bought" onclick="event.stopPropagation(); window.toggleBoughtDirect('${game.id}')">${game.isBought ? '🔍 格價中' : '📦 已購入'}</div>
+            <div class="swipe-action-btn delete" onclick="event.stopPropagation(); window.deleteGameDirect('${game.id}')">🗑️ 刪除</div>
         `;
 
         let minPriceValue = Infinity;
@@ -325,10 +323,10 @@ function renderGames() {
         swipeContainer.innerHTML = `
             ${actionBtnHtml}
             <div class="game-row" id="row_id_${game.id}" 
-                 onclick="openEditModal('${game.id}')"
-                 ontouchstart="handleTouchStart(event)" 
-                 ontouchmove="handleTouchMove(event, '${game.id}')" 
-                 ontouchend="handleTouchEnd(event, '${game.id}')">
+                 onpointerdown="window.handlePointerDown(event)" 
+                 onpointermove="window.handlePointerMove(event, '${game.id}')" 
+                 onpointerup="window.handlePointerUp(event, '${game.id}')"
+                 onpointercancel="window.handlePointerUp(event, '${game.id}')">
                 <div class="game-cover-wrapper">${coverHtml}</div>
                 <div class="game-right-info">
                     <div class="game-row-title">${game.name}</div>
@@ -376,82 +374,102 @@ function switchTab(tab) {
     }
 }
 
-function handleTouchStart(e) {
+function handlePointerDown(e) {
+    startX = e.clientX;
+    startY = e.clientY;
+    isTracking = true;
+    hasMoved = false;
+
     if (currentViewMode === 'grid') return;
-    if (activeSwipeContainer) {
+
+    if (activeSwipeContainer && activeSwipeContainer !== e.currentTarget.parentElement) {
         const openRow = activeSwipeContainer.querySelector('.game-row');
         if (openRow) openRow.style.transform = 'translateX(0px)';
         activeSwipeContainer = null;
+        blockClickUntil = Date.now() + 100;
+        isTracking = false; 
     }
-    touchStartX = e.touches[0].clientX;
-    touchStartY = e.touches[0].clientY;
-    isSwiping = false;
 }
 
-function handleTouchMove(e, docId) {
+function handlePointerMove(e, docId) {
+    if (!isTracking) return;
+
+    const currentX = e.clientX;
+    const currentY = e.clientY;
+    const diffX = startX - currentX; 
+    const diffY = startY - currentY;
+    
     if (currentViewMode === 'grid') return;
-    const currentX = e.touches[0].clientX;
-    const currentY = e.touches[0].clientY;
-    const diffX = touchStartX - currentX; 
-    const diffY = touchStartY - currentY;
     
-    if (!isSwiping && Math.abs(diffY) > Math.abs(diffX)) return; 
-    if (Math.abs(diffX) < 15 && !isSwiping) return;
+    if (!hasMoved && Math.abs(diffY) > Math.abs(diffX)) {
+        isTracking = false; 
+        return;
+    }
     
-    isSwiping = true;
+    // 🚀 將容錯死區調高至 15px，完美防止大拇指點按震動被判定為滑動
+    if (Math.abs(diffX) < 15 && !hasMoved) return;
+    
+    hasMoved = true;
     const row = document.getElementById(`row_id_${docId}`);
     if (!row) return;
 
     if (diffX > 0) {
-        // 👈 左滑 (顯示刪除)
-        const moveX = Math.min(diffX, 80);
+        const moveX = Math.min(diffX, 100);
         row.style.transform = `translateX(-${moveX}px)`;
-        e.preventDefault(); 
     } else {
-        // 👉 右滑 (顯示已購入狀態切換)
-        const moveX = Math.min(Math.abs(diffX), 80);
+        const moveX = Math.min(Math.abs(diffX), 100);
         row.style.transform = `translateX(${moveX}px)`;
-        e.preventDefault();
     }
 }
 
-function handleTouchEnd(e, docId) {
-    if (currentViewMode === 'grid') return;
+function handlePointerUp(e, docId) {
+    if (!isTracking) return;
+    isTracking = false;
+
+    if (currentViewMode === 'grid') {
+        const diffX = Math.abs(startX - e.clientX);
+        const diffY = Math.abs(startY - e.clientY);
+        if (diffX < 15 && diffY < 15) {
+            openEditModal(docId);
+        }
+        return;
+    }
+
     const row = document.getElementById(`row_id_${docId}`);
     const container = document.getElementById(`swipe_id_${docId}`);
     if (!row || !container) return;
-    
-    const currentX = e.changedTouches[0].clientX;
-    const diffX = touchStartX - currentX;
 
-    if (isSwiping && diffX > 45) {
-        // 👈 確定左滑落點
-        row.style.transform = 'translateX(-80px)';
-        activeSwipeContainer = container;
-        blockClickUntil = Date.now() + 100; 
-    } else if (isSwiping && diffX < -45) {
-        // 👉 確定右滑落點
-        row.style.transform = 'translateX(80px)';
-        activeSwipeContainer = container;
-        blockClickUntil = Date.now() + 100;
+    if (hasMoved) {
+        blockClickUntil = Date.now() + 150; 
+        const diffX = startX - e.clientX;
+        if (diffX > 35) {
+            row.style.transform = 'translateX(-100px)';
+            activeSwipeContainer = container;
+        } else if (diffX < -35) {
+            row.style.transform = 'translateX(100px)';
+            activeSwipeContainer = container;
+        } else {
+            row.style.transform = 'translateX(0px)';
+            activeSwipeContainer = null;
+        }
     } else {
-        row.style.transform = 'translateX(0px)';
-        activeSwipeContainer = null;
-        if (isSwiping) blockClickUntil = Date.now() + 100; 
+        if (Date.now() < blockClickUntil) return;
+        const currentTransform = row.style.transform;
+        if (currentTransform && currentTransform !== 'translateX(0px)' && currentTransform !== 'none') {
+            row.style.transform = 'translateX(0px)';
+            activeSwipeContainer = null;
+        } else {
+            openEditModal(docId);
+        }
     }
-    touchStartX = 0; touchStartY = 0; isSwiping = false;
 }
 
-// 🚀 [新設] 透過右滑手勢直接快速切換格價與已購入狀態
 async function toggleBoughtDirect(docId) {
     const game = games.find(g => g.id === docId);
     if (!game) return;
 
     const newStatus = !game.isBought;
-    const dataPayload = {
-        isBought: newStatus,
-        date: Date.now()
-    };
+    const dataPayload = { isBought: newStatus, date: Date.now() };
 
     if (isGuestMode) {
         const idx = games.findIndex(g => g.id === docId);
@@ -482,15 +500,6 @@ async function toggleBoughtDirect(docId) {
 }
 
 function openEditModal(docId) {
-    if (Date.now() < blockClickUntil) return;
-    const row = document.getElementById(`row_id_${docId}`);
-    if (row && row.style.transform !== 'translateX(0px)' && row.style.transform !== '') {
-        row.style.transform = 'translateX(0px)';
-        activeSwipeContainer = null;
-        return;
-    }
-
-    activeSwipeContainer = null;
     const game = games.find(g => g.id === docId);
     if (!game) return;
     
@@ -752,12 +761,11 @@ if (document.readyState === 'loading') {
     startAppInitialization();
 }
 
-// 🚀 全域安全橋接器 (加設頭像點擊與設定頁登入分流)
+// 全域安全掛載橋接器
 window.handleAvatarClick = handleAvatarClick;
 window.handleSettingsAuthAction = handleSettingsAuthAction;
 window.openAuthModal = openAuthModal;
 window.closeAuthModal = closeAuthModal;
-
 window.handleAuthAction = handleAuthAction;
 window.toggleAuthMode = toggleAuthMode;
 window.handleLogout = handleLogout;
@@ -779,4 +787,8 @@ window.openBackupModal = openBackupModal;
 window.closeBackupModal = closeBackupModal;
 window.copyBackupData = copyBackupData;
 window.updateScraperLinks = updateScraperLinks;
-window.toggleBoughtDirect = toggleBoughtDirect; // 🚀 注入全域橋接
+window.toggleBoughtDirect = toggleBoughtDirect;
+window.deleteGameDirect = deleteGameDirect;
+window.handlePointerDown = handlePointerDown;
+window.handlePointerMove = handlePointerMove;
+window.handlePointerUp = handlePointerUp;
